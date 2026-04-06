@@ -72,6 +72,7 @@ export function App() {
       <Routes>
         <Route element={<DashboardShell />}>
           <Route path="/" element={<OverviewPage />} />
+          <Route path="/agents" element={<AgentsPage />} />
           <Route path="/office" element={<OfficePage />} />
           <Route path="/meeting" element={<MeetingPage />} />
           <Route path="/activity" element={<ActivityPage />} />

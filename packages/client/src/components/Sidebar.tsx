@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 
 const navItems = [
   { path: '/',         label: '시스템 개요',    icon: '📊' },
+  { path: '/agents',   label: '에이전트 목록',  icon: '🤖' },
   { path: '/office',   label: '에이전트 오피스', icon: '🏢' },
   { path: '/meeting',  label: '에이전트 회의',  icon: '🤝' },
   { path: '/activity', label: '활동 타임라인',  icon: '📋' },

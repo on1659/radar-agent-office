@@ -127,12 +127,12 @@ export function AgentsPage() {
                   gap: '6px',
                   marginTop: '4px',
                   padding: '2px 8px',
-                  borderRadius: '10px',
                   background: 'rgba(74,222,128,0.1)',
                   border: '1px solid rgba(74,222,128,0.3)',
                   fontSize: '10px',
                   color: 'var(--accent-green)',
                   fontFamily: 'var(--font-mono)',
+                  borderRadius: 'var(--radius-sm)',
                 }}>
                   ✓ {completed.result.tokensUsed.toLocaleString()}tok
                   · ${completed.result.costUsd.toFixed(4)}

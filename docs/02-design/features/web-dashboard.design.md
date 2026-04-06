@@ -617,10 +617,10 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 **성공 기준**:
 - [ ] WS 연결 후 에이전트 목록 표시 (Status / Name / Department / Role / Model / Current Task)
 - [ ] `statusUpdate` 이벤트 수신 시 해당 행의 StatusBadge 즉시 갱신 (polling 없음)
-- [ ] `working` 상태 에이전트가 목록 최상단에 고정 표시
+- [ ] `working` 상태 에이전트가 목록 최상단에 고정 표시 — 정렬 순서: `working → queued → idle → error`
 - [ ] 에이전트 0명일 때 "No agents found. Check WORKSPACE_ROOT configuration." 표시
 
-**구현 상태**: `AgentListView.tsx` 완료 (working 하이라이트, 빈 상태 메시지 포함). `AgentsPage.tsx` 스캐폴드 단계 — working 정렬 로직 + 1/3·2/3 레이아웃 연결 필요.
+**구현 상태**: `AgentsPage.tsx` 완료 (173줄). working→queued→idle→error 정렬, 1/3·2/3 레이아웃, StatusBadge + LogPanel 연결, 완료 칩(tokensUsed/costUsd/duration), currentTasks 표시, 빈 상태 메시지 포함. 빌드 0 errors 통과 (2026-04-07).
 
 ---
 
@@ -634,7 +634,7 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 - [ ] 이미 `working` 상태 에이전트 선택 시 중지 버튼 활성화 → `stopAgent` 이벤트 전송
 - [ ] `agentQueued` 수신 시 대기 상태(Queued) 표시
 
-**구현 상태**: `CommandBar.tsx` 완료. WS `runAgent`/`stopAgent` 이벤트 연결 확인 필요.
+**구현 상태**: `CommandBar.tsx` 완료. WS `runAgent`/`stopAgent` 이벤트 정의 확인 (`@radar/shared` events.ts). 서버측 핸들러 연결은 E2E 테스트에서 검증 필요.
 
 ---
 
@@ -645,12 +645,57 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 **성공 기준**:
 - [ ] `agentStream` chunk가 LogPanel에 실시간 append됨 (새 chunk마다 자동 스크롤)
 - [ ] 에이전트 선택 → LogPanel 즉시 전환 (사용자 지연 없음)
-- [ ] `agentDone` 수신 시 CompletionToast 표시: `✓ 완료 | {tokens} tokens | {cost} | {duration}`
+- [ ] `agentDone` 수신 시 CompletionToast 표시: `✓ 완료 | {tokens} tokens | {cost} | {duration}` — `costUsd` 필드 없으면 비용 항목 생략, 있는 필드만 표시
 - [ ] LogPanel 에이전트 미선택 시 "Select an agent to view logs" 빈 상태 표시
 
-**구현 상태**: `LogPanel.tsx` + `CompletionToast.tsx` 완료. `AgentsPage.tsx`에서 선택 에이전트 → LogPanel 연결 필요.
+**구현 상태**: `LogPanel.tsx` + `CompletionToast.tsx` 완료. `AgentsPage.tsx`에서 선택 에이전트 → LogPanel 연결 완료. 완료 칩: `tokensUsed` + `costUsd` + `duration` 표시 (`AgentResult` 타입 기준). 빌드 0 errors 통과 (2026-04-07).
 
 > **참고**: "선택 → LogPanel 전환 100ms 이내" 수치 기준 삭제. React 상태 변경 리렌더링이므로 "즉시 전환 (사용자 지연 없음)"으로 대체.
+
+---
+
+### 10.5 Feature 4 — 상태별 색상 시각 구분
+
+**User Story**: 파워유저로서, 에이전트 상태를 색상만으로 즉시 구분하고 싶다.
+
+**상태별 색상 명세** (StatusBadge 기준):
+
+| Status | 텍스트/아이콘 색상 | 배경 색상 | 의미 |
+|--------|-----------------|----------|------|
+| `idle` | `#4CAF50` (초록) | `rgba(76, 175, 80, 0.10)` | 대기 중 |
+| `working` | `#2196F3` (파랑) + 펄싱 애니메이션 | `rgba(33, 150, 243, 0.10)` | 작업 중 |
+| `error` | `#F44336` (빨강) | `rgba(244, 67, 54, 0.10)` | 오류 |
+| `queued` | `#FFC107` (노랑) | `rgba(255, 193, 7, 0.10)` | 대기열 |
+
+**성공 기준**:
+- [ ] 4가지 상태가 색상만으로 즉시 구분 가능
+- [ ] `working` 상태 배지에 펄싱 애니메이션 적용 (CSS keyframe)
+- [ ] 색상 상수는 컴포넌트 내 인라인 스타일로 정의 (별도 CSS 파일 없음)
+
+**레이아웃 수치** (AgentsPage):
+- 좌우 분할 비율: `1/3 (AgentListView) : 2/3 (LogPanel)`
+- 패널 간 간격: `gap: 16px`
+- 각 패널 내부 패딩: `padding: 12px`
+
+**구현 상태**: 스타일 명세 확정 (도윤 Meeting #12). 서진 빌드 0 errors 통과 후 도윤이 스타일 레이어 병합 예정.
+
+---
+
+### 10.6 Out of Scope (Phase 1)
+
+Phase 1에서 **구현하지 않는** 항목. 요청이 있어도 Phase 1 내 추가하지 않는다.
+
+| 항목 | 이동 Phase | 제외 이유 |
+|------|-----------|----------|
+| 90초 온보딩 플로우 | Phase 1.5 | MVP 핵심 루프와 독립적. 초기 사용자 피드백 수집 후 설계 |
+| 활동 타임라인 `/activity` | Phase 1.5 | SQLite 데이터는 Phase 1부터 쌓임. UI는 데이터 축적 후 |
+| 에이전트 클릭 → 인라인 상세 패널 | Phase 1.5 | AgentsPage 리스트 뷰로 충분히 대체 가능 |
+| 승인 모달 (ApprovalModal) | Phase 1.5 | `approvalRequest` WS 이벤트 수신 구현 후 진행 |
+| 설정 페이지 `/settings` | Phase 1.5 | `.env` 파일로 충분 |
+| 사용 통계 (recharts) | Phase 2 | 데이터 축적 필요 + recharts 도입 별도 판단 |
+| 프로젝트 관리 보드 (칸반) | Phase 2 | UI 설계 별도 필요 |
+| 파이프라인 시각화 (@xyflow/react) | Phase 3 | 라이브러리 선택 + 별도 설계 필요 |
+| OfficePage (2.5D Canvas) | Phase 2 | AgentsPage 에이전트 상태 연결 검증 후 진행 |
 
 ---
 
