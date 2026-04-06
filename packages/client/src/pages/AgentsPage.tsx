@@ -1,5 +1,6 @@
 // Design Ref: §5.4 — Agents list page, 1:2 split layout
 import { useEffect } from 'react';
+import type { CSSProperties } from 'react';
 import type { AgentStatus } from '@radar/shared';
 import { useWorkspaceStore } from '../store/useWorkspaceStore';
 import { useAgentStore } from '../store/useAgentStore';
@@ -13,12 +14,31 @@ const STATUS_ORDER: Record<AgentStatus, number> = {
   error:   3,
 };
 
-const STATUS_BG: Record<AgentStatus, string> = {
-  idle:    'transparent',
-  working: 'rgba(74,158,255,0.05)',
-  error:   'rgba(248,113,113,0.05)',
-  queued:  'rgba(251,191,36,0.05)',
+// Doyun's style constants (Meeting #13)
+const STATUS_COLORS: Record<AgentStatus, { fg: string; bg: string }> = {
+  idle:    { fg: '#4CAF50', bg: 'rgba(76, 175, 80, 0.1)' },
+  working: { fg: '#2196F3', bg: 'rgba(33, 150, 243, 0.1)' },
+  error:   { fg: '#F44336', bg: 'rgba(244, 67, 54, 0.1)' },
+  queued:  { fg: '#FFC107', bg: 'rgba(255, 193, 7, 0.1)' },
+} as const;
+
+const DONE_CHIP_STYLE: CSSProperties = {
+  backgroundColor: 'rgba(76, 175, 80, 0.15)',
+  border: '1px solid #4CAF50',
+  borderRadius: 4,
+  padding: '2px 8px',
+  fontSize: 12,
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 8,
 };
+
+const LAYOUT = {
+  gap:      16,
+  padding:  12,
+  listFlex: 1,
+  logFlex:  2,
+} as const;
 
 export function AgentsPage() {
   const agents        = useWorkspaceStore((s) => s.agents);
@@ -43,13 +63,13 @@ export function AgentsPage() {
   const selectedChunks = selectedAgentId ? (chunks[selectedAgentId] ?? []) : [];
 
   return (
-    <div style={{ display: 'flex', height: '100%', gap: '0', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100%', gap: LAYOUT.gap, overflow: 'hidden' }}>
       {/* Left 1/3 — Agent list */}
       <div style={{
-        width: '33.33%',
+        flex: LAYOUT.listFlex,
         borderRight: '1px solid var(--border-color)',
         overflow: 'auto',
-        flexShrink: 0,
+        minWidth: 0,
       }}>
         <div style={{
           padding: '16px',
@@ -72,18 +92,18 @@ export function AgentsPage() {
               key={agent.id}
               onClick={() => setSelectedAgent(isSelected ? null : agent.id)}
               style={{
-                padding: '12px 16px',
+                padding: LAYOUT.padding,
                 borderBottom: '1px solid var(--border-color)',
                 background: isSelected
-                  ? 'rgba(74,158,255,0.12)'
-                  : STATUS_BG[status],
+                  ? 'rgba(33, 150, 243, 0.15)'
+                  : STATUS_COLORS[status].bg,
                 cursor: 'pointer',
                 transition: 'background 0.1s',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                 <StatusBadge status={status} />
-                <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>
+                <span style={{ fontWeight: 600, fontSize: '13px', color: STATUS_COLORS[status].fg }}>
                   {agent.name}
                 </span>
                 <span style={{
@@ -121,22 +141,11 @@ export function AgentsPage() {
 
               {/* Completion chip */}
               {completed && status !== 'working' && (
-                <div style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  marginTop: '4px',
-                  padding: '2px 8px',
-                  background: 'rgba(74,222,128,0.1)',
-                  border: '1px solid rgba(74,222,128,0.3)',
-                  fontSize: '10px',
-                  color: 'var(--accent-green)',
-                  fontFamily: 'var(--font-mono)',
-                  borderRadius: 'var(--radius-sm)',
-                }}>
-                  ✓ {completed.result.tokensUsed.toLocaleString()}tok
-                  · ${completed.result.costUsd.toFixed(4)}
-                  · {(completed.result.duration / 1000).toFixed(1)}s
+                <div style={{ ...DONE_CHIP_STYLE, marginTop: 4, fontFamily: 'var(--font-mono)' }}>
+                  ✓ 완료
+                  {` | ${completed.result.tokensUsed.toLocaleString()} tokens`}
+                  {` | $${completed.result.costUsd.toFixed(3)}`}
+                  {` | ${(completed.result.duration / 1000).toFixed(1)}s`}
                 </div>
               )}
             </div>
@@ -151,7 +160,7 @@ export function AgentsPage() {
       </div>
 
       {/* Right 2/3 — Log panel */}
-      <div style={{ flex: 1, padding: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flex: LAYOUT.logFlex, padding: LAYOUT.padding, overflow: 'hidden', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div style={{
           fontSize: '13px',
           fontWeight: 600,
