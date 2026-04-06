@@ -165,6 +165,10 @@ export async function runMeeting(userAgenda?: string[]): Promise<Meeting> {
     );
 
     broadcastStatus('completed');
+
+    // Auto commit + push after meeting
+    gitCommitAndPush(sequence, currentMeeting.totalTokens, currentMeeting.totalCostUsd);
+
     const completedMeeting = { ...currentMeeting };
     currentMeeting = null;
     return completedMeeting;
@@ -268,6 +272,27 @@ function broadcastStatus(phase: MeetingPhase): void {
       schedulerActive: true,
     },
   });
+}
+
+function gitCommitAndPush(meetingSeq: number, tokens: number, cost: number): void {
+  try {
+    const cwd = config.workspaceRoot;
+    // Check if there are changes
+    const status = execSync('git status --short', { cwd, encoding: 'utf-8' }).trim();
+    if (!status) {
+      console.log(`[GIT] Meeting #${meetingSeq}: no changes to commit`);
+      return;
+    }
+
+    const changedFiles = status.split('\n').length;
+    execSync('git add -A', { cwd, encoding: 'utf-8' });
+    const msg = `Meeting #${meetingSeq}: ${changedFiles} files changed (${tokens} tokens, $${cost.toFixed(4)})`;
+    execSync(`git commit -m "${msg}"`, { cwd, encoding: 'utf-8' });
+    execSync('git push', { cwd, encoding: 'utf-8', timeout: 30_000 });
+    console.log(`[GIT] ${msg} — pushed`);
+  } catch (err) {
+    console.error('[GIT] commit/push failed:', err instanceof Error ? err.message : err);
+  }
 }
 
 function getProjectStatus(): string {
