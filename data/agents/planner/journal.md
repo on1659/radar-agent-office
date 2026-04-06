@@ -1,0 +1,191 @@
+# 하은의 저널
+
+<!-- 회의/작업 후 자동으로 엔트리가 추가됩니다 -->
+
+## [2026-04-05 03:48]
+
+## Meeting #1
+
+### 결정사항
+
+
+### 내가 한 일
+No task assigned
+
+## [2026-04-05 03:51]
+
+## Meeting #2
+
+### 결정사항
+
+
+### 내가 한 일
+No task assigned
+
+## [2026-04-05 03:53]
+
+## Meeting #3
+
+### 결정사항
+
+
+### 내가 한 일
+No task assigned
+
+## [2026-04-05 03:57]
+
+## Meeting #4
+
+### 결정사항
+
+
+### 내가 한 일
+No task assigned
+
+## [2026-04-05 04:00]
+
+## Meeting #5
+
+### 결정사항
+
+
+### 내가 한 일
+No task assigned
+
+## [2026-04-05 04:02]
+
+## Meeting #6
+
+### 결정사항
+
+
+### 내가 한 일
+No task assigned
+
+## [2026-04-05 04:25]
+
+## Meeting #8
+
+### 결정사항
+- Phase 1 필수 기능 3개 확정: 에이전트 목록+실시간 상태, 에이전트 실행, 결과 스트리밍
+- OfficePage(캔버스)는 Phase 1 제외 — 에이전트 상태 연결 검증 후 Phase 2에서 진행
+- AgentsPage 레이아웃 확정: 좌 1/3 에이전트 목록 + 우 2/3 LogPanel, working 에이전트 최상단 고정, 완료 요약 칩 포함
+- 기존 컴포넌트 조립 방식으로 구현 — 이번 주 내 완료 목표
+
+### 내가 한 일
+Now I have a complete picture of the existing documents. Let me also check the agent-meeting design doc briefly, then I'll update the web-dashboard design document with Phase 1/1.5/2 boundaries and success criteria.Now I have everything I need. I'll add Section 10 (Phase Scope & Success Criteria) to the design document and update the version history.It looks like write permissions need to be granted. Let me attempt the edit again — please approve the file write when prompted.파일 쓰기 권한이 차단되어 있습니다. 추가할 내용을 아래에 정리합니다 — 권한 승인 후 반영하거나 직접 복사해서 `docs/02-design/features/web-dashboard.design.md`의 Section 9와 Section 11 사이에 넣어주세요.
+
+---
+
+**추가할 내용 — Section 10 전체:**
+
+```markdown
+---
+
+## 10. Phase Scope & Success Criteria
+
+### 10.1 Phase Boundary Clarification
+
+Phase 1은 **핵심 3기능**만 포함. 온보딩·타임라인·승인 모달 등 보완 기능은 Phase 1.5로 분리.
+
+| Phase | Period | Core Deliverable | Boundary Condition |
+|-------|--------|------------------|--------------------|
+| **Phase 0** | W1-W2 | 기반 인프라 | `npm run dev` 동작 + CLI subprocess WS 수신 확인 |
+| **Phase 1** | W3-W6 | MVP 핵심 3기능 | 에이전트 오피스 + 작업 루프 + 시스템 개요 완동 |
+| **Phase 1.5** | W7-W8 | MVP 보완 | 온보딩 + 활동 타임라인 + 승인 모달 + 설정 |
+| **Phase 2** | W9-W12 | 시각화 강화 | 사용 통계 + 프로젝트 보드 + 이중 뷰 심화 |
+| **Phase 3** | W13-W16 | 고급 기능 | 파이프라인 그래프 + 카탈로그 + 자동화 |
+
+#### Phase 1에서 제외된 항목
+
+| Feature | 이동 Phase | 이유 |
+|---------|-----------|------|
+| 90초 온보딩 플로우 (FR-11) | Phase 1.5 | MVP 핵심 루프와 독립적, 피드백 후 설계 |
+| 활동 타임라인 (`/activity`) | Phase 1.5 | SQLite 데이터는 Phase 1부터 쌓이므로 UI는 후순위 |
+| 에이전트 클릭 → 인라인 상세 패널 | Phase 1.5 | 리스트 뷰로 대체 가능 |
+| 승인 모달 (ApprovalModal) | Phase 1.5 | `approvalRequest` WS 이벤트 수신부터 구현 |
+| 설정 페이지 (`/settings`) | Phase 1.5 | .env로 충분 |
+| 사용 통계 (FR-07) | Phase 2 | recharts 도입, 데이터 축적 필요 |
+| 프로젝트 관리 보드 (FR-09) | Phase 2 | 칸반 UI 별도 설계 필요 |
+| 파이프라인 시각화 (FR-08) | Phase 3 | @xyflow/react, 별도 설계 필요 |
+
+---
+
+### 10.2 Feature 1 — 에이전트 오피스 뷰 (FR-01)
+
+**User Story**: 멀티에이전트 파워유저로서, 어떤 에이전트가 어떤 상태인지 시각적으로 한 화면에서 파악하고 싶다.
+
+**Definition of Done**:
+- [ ] Canvas 렌더링 60fps (20×14 타일맵
+
+## [2026-04-06 15:44]
+
+## Meeting #9
+
+### 결정사항
+
+
+### 내가 한 일
+No task assigned
+
+## [2026-04-06 15:49]
+
+## Meeting #10
+
+### 결정사항
+
+
+### 내가 한 일
+No task assigned
+
+## [2026-04-06 15:54]
+
+## Meeting #11
+
+### 결정사항
+
+
+### 내가 한 일
+No task assigned
+
+## [2026-04-06 16:01]
+
+## Meeting #12
+
+### 결정사항
+- AgentsPage 구현을 이번 회의 내 완료 — 빌드 0 errors가 완료 기준
+- working 정렬 순서 확정: working → queued → idle → error
+- 성공 기준 Q3 변경: 100ms → '선택 즉시 반영 (시각적 지연 없음)'
+- 완료 칩 표시 내용은 @radar/shared 타입 정의 기준 — costUsd 없으면 생략
+- 스타일 적용은 서진 빌드 통과 후 도윤이 별도 레이어로 병합
+
+### 내가 한 일
+이제 코드 실제 상태를 파악했습니다. 분석 결과:
+
+- **AgentsPage.tsx**: 22줄짜리 스캐폴드 — 실제 컴포넌트 body 없음
+- **AgentListView.tsx**: 완료 (working 하이라이트 있지만 최상단 정렬 미구현)
+- **LogPanel.tsx**: 완료 (청크 append + 자동스크롤)
+- **CompletionToast.tsx**: 완료 (tokens + cost + duration + filesChanged)
+- **useAgentStore.ts**: 완료 (completedResults, chunks, selectedAgentId 모두 있음)
+
+이 실제 상태를 반영해서 Section 10을 작성합니다.버전 이력도 업데이트합니다.작업 완료했습니다. Section 10이 `docs/02-design/features/web-dashboard.design.md`에 반영됐습니다.
+
+**반영 내용 요약:**
+- Phase 0~3 경계 확정 (Exit Condition 포함)
+- Phase 1 제외 항목 8개 명시 (이동 Phase + 이유)
+- Feature 1 (에이전트 목록): AgentListView 완료 / AgentsPage working 정렬 + 레이아웃 연결 필요
+- Feature 2 (에이전트 실행): CommandBar 완료 / WS 이벤트 연결 확인 필요
+- Feature 3 (결과 스트리밍): LogPanel + CompletionToast 완료 / AgentsPage 연결 필요
+- "선택 → LogPanel 전환 100ms" 수치 기준 → "즉시 전환 (사용자 지연 없음)"으로 수정
+
+```json
+{"summary": "web-dashboard.design.md에 Section 10 (Phase Scope & Success Criteria) 추가 완료. 코드 실제 구현 상태(AgentsPage 22줄 스캐폴드, AgentListView/LogPanel/CompletionToast 완료) 기반으로 성공 기준 작성. Phase 1~3 경계 확정, Phase 1 제외 항목 8개 명시, 핵심 3기능별 체크리스트 형식 성공 기준 명세.", "filesChanged": ["docs/02-design/features/web-dashboard.design.md"], "nextSteps": ["AgentsPage.tsx 구현 완료 (working 정렬 + 1/3·2/3 레이아웃 + LogPanel 연결)", "CommandBar WS runAgent/stopAgent 이벤트 연결 확인", "/pdca analyze store 로 Gap 분석 실행"]}
+```
+
+─────────────────────────────────────────────────
+📊 bkit Feature Usage
+─────────────────────────────────────────────────
+✅ Used: Read (AgentsPage, AgentListView, LogPanel, CompletionToast, useAgentStore 코드 확인), Edit (Section 10 + Version History 반영)
+⏭️ Not Used: gap-detector (AgentsPage 구현 완료 후 실행 예정), /pdca do (문서화 태스크이므로 직접 편집)
+💡 Recommended: AgentsPage.tsx 구현 완료 후 → `/pdca analyze store` 로 Gap 분석
+─────────────────────────────────────────────────

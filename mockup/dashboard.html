@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radar Agent Office — Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2333;--bg4:#21262d;
+  --border:#30363d;--text:#e6edf3;--dim:#8b949e;--muted:#484f58;
+  --accent:#58a6ff;
+  --blue:#4A9EFF;--green:#4ADE80;--orange:#FB923C;--red:#F87171;--purple:#A78BFA;--mint:#2DD4BF;--yellow:#FBBF24;
+  --sidebar-w:220px;--cmdbar-h:56px;
+}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;}
+
+/* ── Layout ── */
+.dashboard{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:1fr var(--cmdbar-h);height:100vh;}
+
+/* ── Sidebar ── */
+.sidebar{grid-row:1/3;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;user-select:none;}
+.sidebar-logo{padding:20px 20px 28px;display:flex;flex-direction:column;gap:2px;}
+.sidebar-logo .brand{font-size:15px;font-weight:800;letter-spacing:1px;color:var(--accent);}
+.sidebar-logo .sub{font-size:11px;color:var(--muted);font-weight:400;}
+.nav-group{display:flex;flex-direction:column;gap:1px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 20px;color:var(--dim);cursor:pointer;font-size:13px;transition:all .15s;border-left:3px solid transparent;}
+.nav-item:hover{background:var(--bg2);color:var(--text);}
+.nav-item.active{background:var(--bg2);color:var(--accent);border-left-color:var(--accent);font-weight:600;}
+.nav-icon{width:18px;text-align:center;font-size:14px;}
+.nav-badge{margin-left:auto;background:var(--green);color:#000;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;min-width:18px;text-align:center;}
+.sidebar-footer{margin-top:auto;padding:14px 20px;border-top:1px solid var(--border);font-size:11px;color:var(--dim);}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:middle;}
+
+/* ── Main ── */
+.main{overflow-y:auto;padding:24px 32px 32px;}
+.page{display:none;}.page.active{display:block;}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;}
+.page-title{font-size:20px;font-weight:700;}
+.page-subtitle{font-size:12px;color:var(--dim);margin-top:4px;}
+.btn{padding:7px 16px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:12px;cursor:pointer;transition:all .15s;}
+.btn:hover{background:var(--bg3);border-color:var(--dim);}
+.btn.primary{background:var(--accent);color:#000;border:none;font-weight:600;}
+.btn.primary:hover{opacity:.85;}
+
+/* ── Stat Cards ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;transition:all .2s;cursor:default;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(88,166,255,.06);}
+.stat-card .label{font-size:12px;color:var(--dim);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.stat-card .dot{width:8px;height:8px;border-radius:2px;}
+.stat-card .value{font-size:36px;font-weight:800;line-height:1;}
+.stat-card .detail{font-size:11px;color:var(--muted);margin-top:8px;}
+.stat-card.blue .value{color:var(--blue);}.stat-card.blue .dot{background:var(--blue);}
+.stat-card.green .value{color:var(--green);}.stat-card.green .dot{background:var(--green);}
+.stat-card.orange .value{color:var(--orange);}.stat-card.orange .dot{background:var(--orange);}
+.stat-card.red .value{color:var(--red);}.stat-card.red .dot{background:var(--red);}
+.stat-card.mint .value{color:var(--mint);}.stat-card.mint .dot{background:var(--mint);}
+.stat-card.purple .value{color:var(--purple);}.stat-card.purple .dot{background:var(--purple);}
+
+/* ── Summary bar ── */
+.summary-bar{display:flex;gap:0;padding:0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:24px;overflow:hidden;}
+.summary-item{flex:1;padding:16px 20px;text-align:center;border-right:1px solid var(--border);}
+.summary-item:last-child{border-right:none;}
+.summary-item .num{font-size:22px;font-weight:800;color:var(--accent);}
+.summary-item .txt{font-size:11px;color:var(--dim);margin-top:2px;}
+
+/* ── Chart cards ── */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;transition:box-shadow .2s;}
+.chart-card:hover{box-shadow:0 0 24px rgba(88,166,255,.05);}
+.chart-card h3{font-size:14px;font-weight:600;margin-bottom:16px;}
+.chart-center{display:flex;align-items:center;justify-content:center;flex-direction:column;}
+
+/* ── Activity ── */
+.activity-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:24px;}
+.activity-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;transition:box-shadow .2s;}
+.activity-card:hover{box-shadow:0 0 24px rgba(88,166,255,.05);}
+.activity-card h3{font-size:14px;font-weight:600;margin-bottom:12px;}
+.activity-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;line-height:1.5;}
+.activity-item:last-child{border:none;}
+.activity-dot{width:6px;height:6px;border-radius:50%;margin-top:6px;flex-shrink:0;}
+.activity-item .meta{color:var(--muted);font-size:10px;margin-top:2px;}
+
+/* ══════════ OFFICE PAGE ══════════ */
+#office-canvas-wrap{position:relative;display:inline-block;border-radius:12px;overflow:hidden;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.3);cursor:default;}
+#office-canvas{display:block;image-rendering:pixelated;}
+#canvas-tooltip{position:absolute;pointer-events:none;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--text);white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.5);display:none;z-index:10;}
+
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+/* ── Agent Detail Panel ── */
+.detail-panel{position:fixed;top:0;right:-380px;width:380px;height:100vh;background:var(--bg2);border-left:1px solid var(--border);z-index:100;transition:right .25s ease;display:flex;flex-direction:column;box-shadow:-4px 0 30px rgba(0,0,0,.4);}
+.detail-panel.open{right:0;}
+.detail-header{display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid var(--border);}
+.detail-header h3{font-size:16px;font-weight:700;}
+.detail-close{background:none;border:none;color:var(--dim);font-size:20px;cursor:pointer;padding:4px 8px;}
+.detail-close:hover{color:var(--text);}
+.detail-body{padding:20px;overflow-y:auto;flex:1;}
+.detail-field{margin-bottom:16px;}
+.detail-field .field-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.detail-field .field-value{font-size:14px;font-weight:500;}
+.detail-history{margin-top:8px;}
+.detail-history-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.detail-history-item:last-child{border:none;}
+.detail-history-item .hist-time{color:var(--muted);font-size:10px;margin-top:2px;}
+
+/* ── List View Table ── */
+.list-table{width:100%;border-collapse:collapse;font-size:13px;}
+.list-table thead th{padding:10px 14px;color:var(--dim);font-weight:600;text-align:left;border-bottom:2px solid var(--border);font-size:12px;text-transform:uppercase;letter-spacing:.3px;}
+.list-table tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;}
+.list-table tbody tr:hover{background:var(--bg3);}
+.list-table tbody td{padding:10px 14px;}
+.model-badge{display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:700;}
+.model-badge.opus{background:#D97706;color:#000;}
+.model-badge.sonnet{background:#2563EB;color:#fff;}
+.model-badge.haiku{background:#059669;color:#fff;}
+
+/* ── Stats Page ── */
+.stats-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.stats-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;transition:all .2s;}
+.stats-card:hover{box-shadow:0 0 20px rgba(88,166,255,.06);}
+.stats-card .s-value{font-size:28px;font-weight:800;color:var(--accent);}
+.stats-card .s-label{font-size:11px;color:var(--dim);margin-top:4px;}
+.tool-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.tool-bar-label{width:80px;text-align:right;font-size:11px;color:var(--dim);flex-shrink:0;}
+.tool-bar{height:24px;border-radius:4px;min-width:4px;transition:width .5s ease;}
+.tool-bar-value{font-size:10px;color:var(--muted);margin-left:6px;flex-shrink:0;}
+
+/* ── Pipeline Page ── */
+.pipeline-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.pipeline-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;transition:box-shadow .2s;}
+.pipeline-card:hover{box-shadow:0 0 24px rgba(88,166,255,.05);}
+.pipeline-card h4{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.pipeline-card h4 .pipe-badge{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:700;}
+.pipeline-flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.pipeline-node{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:11px;color:var(--dim);transition:all .15s;}
+.pipeline-node:hover{border-color:var(--accent);color:var(--text);}
+.pipeline-node.active{border-color:var(--green);color:var(--green);box-shadow:0 0 10px rgba(74,222,128,.15);}
+.pipeline-arrow{color:var(--muted);font-size:13px;font-weight:700;}
+
+/* ── Monitor Page ── */
+.monitor-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.monitor-panel{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;}
+.monitor-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;}
+.monitor-header .m-status{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite;}
+.monitor-header .m-time{margin-left:auto;font-size:11px;color:var(--dim);font-weight:400;}
+.monitor-log{padding:12px 16px;font-family:'Cascadia Code','Fira Code','Consolas',monospace;font-size:11px;color:var(--green);line-height:1.8;height:320px;overflow-y:auto;background:var(--bg);}
+.monitor-log .log-dim{color:var(--muted);}
+.monitor-log .log-warn{color:var(--orange);}
+.monitor-log .log-info{color:var(--blue);}
+
+/* ── Project Page ── */
+.project-summary{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.project-summary-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.project-summary-card h3{font-size:14px;font-weight:600;margin-bottom:12px;}
+.project-summary-card .big-num{font-size:36px;font-weight:800;color:var(--accent);}
+.project-summary-card .big-sub{font-size:12px;color:var(--dim);margin-top:4px;}
+.project-list{list-style:none;}
+.project-list li{padding:10px 0;border-bottom:1px solid var(--border);font-size:12px;display:flex;align-items:flex-start;gap:10px;}
+.project-list li:last-child{border:none;}
+.project-dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+
+/* ── Settings Page ── */
+.settings-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:16px;}
+.settings-section h3{font-size:15px;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.setting-row:last-child{border:none;}
+.setting-label{font-size:13px;}.setting-desc{font-size:11px;color:var(--muted);margin-top:2px;}
+.setting-input{background:var(--bg4);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:12px;width:260px;outline:none;}
+.setting-input:focus{border-color:var(--accent);}
+
+/* ── CommandBar ── */
+.commandbar{grid-column:2;display:flex;align-items:center;gap:12px;padding:8px 24px;background:var(--bg2);border-top:1px solid var(--border);}
+.cmd-select{background:var(--bg4);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:12px;width:160px;cursor:pointer;outline:none;}
+.cmd-select:focus{border-color:var(--accent);}
+.cmd-input{flex:1;background:var(--bg4);border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:8px;font-size:13px;outline:none;}
+.cmd-input::placeholder{color:var(--muted);}
+.cmd-input:focus{border-color:var(--accent);}
+.cmd-btn{background:var(--accent);color:#000;border:none;padding:8px 22px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .15s;}
+.cmd-btn:hover{opacity:.85;}
+.cmd-queue{font-size:10px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:4px;}
+.cmd-queue .q-badge{background:var(--green);color:#000;font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px;}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--dim);}
+
+/* ── Overlay backdrop ── */
+.detail-backdrop{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);z-index:99;display:none;}
+.detail-backdrop.open{display:block;}
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+<!-- ════════ Sidebar ════════ -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand">RADAR</div>
+    <div class="sub">Agent Office v0.2</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-item active" data-page="overview"><span class="nav-icon">&#9635;</span> 시스템 개요</div>
+    <div class="nav-item" data-page="office"><span class="nav-icon">&#9634;</span> 에이전트 오피스</div>
+    <div class="nav-item" data-page="stats"><span class="nav-icon">&#9636;</span> 사용 통계</div>
+    <div class="nav-item" data-page="pipeline"><span class="nav-icon">&#9654;</span> 파이프라인</div>
+    <div class="nav-item" data-page="monitor"><span class="nav-icon">&#9678;</span> 실시간 모니터<span class="nav-badge">3</span></div>
+    <div class="nav-item" data-page="project"><span class="nav-icon">&#9776;</span> 프로젝트</div>
+    <div class="nav-item" data-page="settings"><span class="nav-icon">&#9881;</span> 설정</div>
+  </div>
+  <div class="sidebar-footer">
+    <span class="status-dot"></span>시스템 활성<br>
+    <span style="color:var(--muted);font-size:10px;">Claude Code v2.1.71</span>
+  </div>
+</nav>
+
+<!-- ════════ Main ════════ -->
+<main class="main">
+
+  <!-- ═══ PAGE: 시스템 개요 ═══ -->
+  <div class="page active" id="page-overview">
+    <div class="page-header">
+      <div>
+        <div class="page-title">시스템 개요</div>
+        <div class="page-subtitle">최종 스캔: 2026.03.30 14:30 <span class="status-dot" style="width:6px;height:6px;"></span>시스템 활성</div>
+      </div>
+      <button class="btn" onclick="location.reload()">새로고침</button>
+    </div>
+
+    <div class="summary-bar">
+      <div class="summary-item"><div class="num">12</div><div class="txt">에이전트</div></div>
+      <div class="summary-item"><div class="num">28</div><div class="txt">스킬</div></div>
+      <div class="summary-item"><div class="num">8</div><div class="txt">훅</div></div>
+      <div class="summary-item"><div class="num">15</div><div class="txt">규칙</div></div>
+      <div class="summary-item"><div class="num">4</div><div class="txt">파이프라인</div></div>
+      <div class="summary-item"><div class="num">3</div><div class="txt">MCP</div></div>
+      <div class="summary-item"><div class="num">71</div><div class="txt">종합</div></div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card blue"><div class="label"><span class="dot"></span>에이전트</div><div class="value">12</div><div class="detail">Opus 3 &middot; Sonnet 7 &middot; Haiku 2</div></div>
+      <div class="stat-card green"><div class="label"><span class="dot"></span>스킬</div><div class="value">28</div><div class="detail">디렉토리 8 &middot; 파일 28</div></div>
+      <div class="stat-card orange"><div class="label"><span class="dot"></span>훅</div><div class="value">8</div><div class="detail">5 이벤트 &middot; 8 커맨드</div></div>
+      <div class="stat-card red"><div class="label"><span class="dot"></span>규칙</div><div class="value">15</div><div class="detail">긴급 4 &middot; 중요 6 &middot; 일반 5</div></div>
+      <div class="stat-card mint"><div class="label"><span class="dot"></span>파이프라인</div><div class="value">4</div><div class="detail">총 32단계</div></div>
+      <div class="stat-card purple"><div class="label"><span class="dot"></span>MCP 서버</div><div class="value">3</div><div class="detail">3개 서버</div></div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>에이전트 카테고리 레이더</h3>
+        <div class="chart-center" id="radar-chart"></div>
+      </div>
+      <div class="chart-card">
+        <h3>모델 분포</h3>
+        <div class="chart-center" id="donut-chart"></div>
+      </div>
+    </div>
+
+    <div class="activity-grid">
+      <div class="activity-card">
+        <h3>프로젝트 업데이트</h3>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--green)"></div><div>웹 대시보드 MVP 설계 완료. Phase 0 착수.<div class="meta">radar-agent-office &middot; 방금 전 &middot; 마일스톤</div></div></div>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--blue)"></div><div>12인 에이전트 회의 실행 완료.<div class="meta">radar-agent-office &middot; 1시간 전</div></div></div>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--purple)"></div><div>기존 VS Code Extension 아카이브 결정.<div class="meta">claude_team_gui &middot; 2시간 전</div></div></div>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--orange)"></div><div>웹 풀 대시보드 피벗 결정.<div class="meta">radar-agent-office &middot; 3시간 전</div></div></div>
+      </div>
+      <div class="activity-card">
+        <h3>최근 활동</h3>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--green)"></div><div>architect -- 시스템 설계 분석 중<div class="meta">진행 중 &middot; 2분 경과</div></div></div>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--green)"></div><div>developer-1 -- API 엔드포인트 구현 중<div class="meta">진행 중 &middot; 5분 경과</div></div></div>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--green)"></div><div>code-reviewer -- PR #42 리뷰 중<div class="meta">진행 중 &middot; 8분 경과</div></div></div>
+        <div class="activity-item"><div class="activity-dot" style="background:var(--purple)"></div><div>planner -- 로드맵 v1.0 완료<div class="meta">완료 &middot; 15분 전</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: 에이전트 오피스 ═══ -->
+  <div class="page" id="page-office">
+    <div class="page-header">
+      <div>
+        <div class="page-title">에이전트 오피스</div>
+        <div class="page-subtitle">12명의 에이전트가 근무 중 &middot; 3명 작업 중</div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn primary" id="btn-office" onclick="toggleView('office')">오피스 뷰</button>
+        <button class="btn" id="btn-list" onclick="toggleView('list')">리스트 뷰</button>
+      </div>
+    </div>
+
+    <!-- OFFICE VIEW (Canvas) -->
+    <div id="office-view">
+      <div id="office-canvas-wrap">
+        <canvas id="office-canvas" width="768" height="512"></canvas>
+        <div id="canvas-tooltip"></div>
+      </div>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div id="list-view" style="display:none;">
+      <table class="list-table">
+        <thead>
+          <tr>
+            <th>상태</th><th>이름</th><th>부서</th><th>역할</th><th>모델</th><th>현재 작업</th><th>경과</th>
+          </tr>
+        </thead>
+        <tbody id="list-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: 사용 통계 ═══ -->
+  <div class="page" id="page-stats">
+    <div class="page-header">
+      <div>
+        <div class="page-title">사용 통계</div>
+        <div class="page-subtitle">전체 시스템 사용 현황</div>
+      </div>
+    </div>
+
+    <div class="stats-summary">
+      <div class="stats-card"><div class="s-value">746,802</div><div class="s-label">총 이벤트</div></div>
+      <div class="stats-card"><div class="s-value">1,584</div><div class="s-label">총 세션</div></div>
+      <div class="stats-card"><div class="s-value">132</div><div class="s-label">프로젝트</div></div>
+      <div class="stats-card"><div class="s-value">36</div><div class="s-label">에이전트 스폰</div></div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>도구 사용 순위</h3>
+        <div id="tool-usage-chart" style="padding:8px 0;"></div>
+      </div>
+      <div class="chart-card">
+        <h3>일별 활동</h3>
+        <div class="chart-center" id="daily-chart"></div>
+      </div>
+    </div>
+
+    <div class="chart-card" style="margin-top:16px;">
+      <h3>프로젝트별 활동</h3>
+      <div id="project-activity-chart" style="padding:8px 0;"></div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: 파이프라인 ═══ -->
+  <div class="page" id="page-pipeline">
+    <div class="page-header">
+      <div>
+        <div class="page-title">파이프라인</div>
+        <div class="page-subtitle">6개 파이프라인 구성</div>
+      </div>
+    </div>
+
+    <div class="pipeline-grid" id="pipeline-container"></div>
+  </div>
+
+  <!-- ═══ PAGE: 실시간 모니터 ═══ -->
+  <div class="page" id="page-monitor">
+    <div class="page-header">
+      <div>
+        <div class="page-title">실시간 모니터</div>
+        <div class="page-subtitle">현재 작업 중인 에이전트 로그</div>
+      </div>
+    </div>
+
+    <div class="monitor-grid" id="monitor-container"></div>
+  </div>
+
+  <!-- ═══ PAGE: 프로젝트 ═══ -->
+  <div class="page" id="page-project">
+    <div class="page-header">
+      <div>
+        <div class="page-title">프로젝트</div>
+        <div class="page-subtitle">활성 프로젝트 및 미팅 현황</div>
+      </div>
+    </div>
+
+    <div class="project-summary">
+      <div class="project-summary-card">
+        <h3>오늘 요약</h3>
+        <div class="big-num">0 / 0</div>
+        <div class="big-sub">태스크 완료</div>
+        <div style="margin-top:12px;font-size:28px;font-weight:800;color:var(--accent);">0h</div>
+        <div class="big-sub">근무시간</div>
+      </div>
+      <div class="project-summary-card">
+        <h3>최근 미팅</h3>
+        <ul class="project-list">
+          <li><div class="project-dot" style="background:var(--purple);"></div><div>팀 회의: 웹 대시보드 방향성 논의<div style="color:var(--muted);font-size:10px;margin-top:2px;">2026.03.30 13:00 &middot; 45분 &middot; 8명</div></div></li>
+          <li><div class="project-dot" style="background:var(--blue);"></div><div>기술 리뷰: Extension 아키텍처 분석<div style="color:var(--muted);font-size:10px;margin-top:2px;">2026.03.29 15:00 &middot; 30분 &middot; 5명</div></div></li>
+          <li><div class="project-dot" style="background:var(--green);"></div><div>데일리 스탠드업<div style="color:var(--muted);font-size:10px;margin-top:2px;">2026.03.29 09:00 &middot; 15분 &middot; 12명</div></div></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="activity-card">
+      <h3>프로젝트 업데이트</h3>
+      <ul class="project-list">
+        <li><div class="project-dot" style="background:var(--green);"></div><div>radar-agent-office: 웹 대시보드 목업 v0.2 완성<div style="color:var(--muted);font-size:10px;margin-top:2px;">방금 전</div></div></li>
+        <li><div class="project-dot" style="background:var(--blue);"></div><div>radar-agent-office: Phase 0 설계 문서 작성 중<div style="color:var(--muted);font-size:10px;margin-top:2px;">1시간 전</div></div></li>
+        <li><div class="project-dot" style="background:var(--purple);"></div><div>claude_team_gui: VS Code Extension 아카이브<div style="color:var(--muted);font-size:10px;margin-top:2px;">2시간 전</div></div></li>
+        <li><div class="project-dot" style="background:var(--orange);"></div><div>wedding-invitation: 초대장 디자인 피드백 반영<div style="color:var(--muted);font-size:10px;margin-top:2px;">어제</div></div></li>
+        <li><div class="project-dot" style="background:var(--mint);"></div><div>Gongnog: 리소스 최적화 완료<div style="color:var(--muted);font-size:10px;margin-top:2px;">2일 전</div></div></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: 설정 ═══ -->
+  <div class="page" id="page-settings">
+    <div class="page-header">
+      <div>
+        <div class="page-title">설정</div>
+        <div class="page-subtitle">시스템 구성</div>
+      </div>
+      <button class="btn primary">저장</button>
+    </div>
+
+    <div class="settings-section">
+      <h3>연결 설정</h3>
+      <div class="setting-row">
+        <div><div class="setting-label">Claude CLI 경로</div><div class="setting-desc">Claude Code CLI 실행 파일 경로</div></div>
+        <input class="setting-input" value="claude" />
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">워크스페이스</div><div class="setting-desc">기본 작업 디렉토리</div></div>
+        <input class="setting-input" value="D:\Work\vibe\radar-agent-office" />
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">서버 포트</div><div class="setting-desc">대시보드 서버 포트</div></div>
+        <input class="setting-input" value="3847" />
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>에이전트 설정</h3>
+      <div class="setting-row">
+        <div><div class="setting-label">최대 동시 실행 수</div><div class="setting-desc">동시에 실행할 수 있는 에이전트 수</div></div>
+        <input class="setting-input" type="number" value="5" />
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">기본 모델</div><div class="setting-desc">새 에이전트의 기본 모델</div></div>
+        <select class="setting-input" style="cursor:pointer;">
+          <option>claude-sonnet-4-20250514</option>
+          <option>claude-opus-4-20250514</option>
+          <option>claude-haiku-4-20250514</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>보안 설정</h3>
+      <div class="setting-row">
+        <div><div class="setting-label">API 토큰</div><div class="setting-desc">마지막 갱신: 2026.03.28</div></div>
+        <button class="btn">토큰 갱신</button>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">바인딩 주소</div><div class="setting-desc">서버 바인딩 IP</div></div>
+        <input class="setting-input" value="127.0.0.1" />
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ════════ CommandBar ════════ -->
+<div class="commandbar">
+  <select class="cmd-select" id="cmd-agent-select">
+    <option value="">에이전트 선택...</option>
+  </select>
+  <input class="cmd-input" placeholder="프롬프트를 입력하세요..." id="cmd-prompt" />
+  <button class="cmd-btn" onclick="executeCommand()">실행</button>
+  <div class="cmd-queue">활성 <span class="q-badge" id="active-count">3</span></div>
+</div>
+
+</div><!-- /dashboard -->
+
+<!-- ════════ Agent Detail Panel ════════ -->
+<div class="detail-backdrop" id="detail-backdrop" onclick="closeDetail()"></div>
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-header">
+    <h3 id="detail-name">-</h3>
+    <button class="detail-close" onclick="closeDetail()">&times;</button>
+  </div>
+  <div class="detail-body">
+    <div class="detail-field"><div class="field-label">역할</div><div class="field-value" id="detail-role">-</div></div>
+    <div class="detail-field"><div class="field-label">모델</div><div class="field-value" id="detail-model">-</div></div>
+    <div class="detail-field"><div class="field-label">부서</div><div class="field-value" id="detail-dept">-</div></div>
+    <div class="detail-field"><div class="field-label">상태</div><div class="field-value" id="detail-status">-</div></div>
+    <div class="detail-field"><div class="field-label">현재 작업</div><div class="field-value" id="detail-task">-</div></div>
+    <div class="detail-field">
+      <div class="field-label">최근 이력</div>
+      <div class="detail-history" id="detail-history"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Agent Data ──
+const AGENTS = [
+  {id:'architect',name:'architect',dept:'개발부서',deptKey:'dev',role:'시스템 아키텍트',model:'opus',status:'working',task:'시스템 설계 분석 중',time:'2분',bubble:'설계 검토 중...',history:['아키텍처 문서 작성 완료 (10분 전)','DB 스키마 리뷰 (30분 전)','API 설계 승인 (1시간 전)']},
+  {id:'developer-1',name:'developer-1',dept:'개발부서',deptKey:'dev',role:'백엔드 개발자',model:'sonnet',status:'working',task:'API 엔드포인트 구현 중',time:'5분',bubble:'코드 작성 중...',history:['auth 모듈 구현 (20분 전)','테스트 케이스 추가 (45분 전)','API 라우터 설정 (1시간 전)']},
+  {id:'developer-2',name:'developer-2',dept:'개발부서',deptKey:'dev',role:'프론트엔드 개발자',model:'sonnet',status:'idle',task:'대기',time:'--',bubble:null,history:['컴포넌트 리팩토링 (1시간 전)','스타일 시스템 적용 (2시간 전)','레이아웃 구현 (3시간 전)']},
+  {id:'tdd-guide',name:'tdd-guide',dept:'개발부서',deptKey:'dev',role:'TDD 가이드',model:'sonnet',status:'idle',task:'대기',time:'--',bubble:null,history:['테스트 전략 문서 (2시간 전)','커버리지 분석 (3시간 전)','E2E 테스트 설계 (4시간 전)']},
+  {id:'build-err',name:'build-err',dept:'개발부서',deptKey:'dev',role:'빌드 에러 분석',model:'haiku',status:'idle',task:'대기',time:'--',bubble:null,history:['빌드 오류 해결 (30분 전)','의존성 충돌 수정 (1시간 전)','타입 에러 패치 (2시간 전)']},
+  {id:'code-reviewer',name:'code-reviewer',dept:'리뷰부서',deptKey:'review',role:'코드 리뷰어',model:'opus',status:'working',task:'PR #42 리뷰 중',time:'8분',bubble:'PR 분석 중...',history:['PR #41 승인 (20분 전)','보안 취약점 발견 (1시간 전)','리팩토링 제안 (2시간 전)']},
+  {id:'security-rev',name:'security-rev',dept:'리뷰부서',deptKey:'review',role:'보안 리뷰어',model:'sonnet',status:'idle',task:'대기',time:'--',bubble:null,history:['인증 로직 검토 (1시간 전)','XSS 점검 완료 (3시간 전)','의존성 취약점 스캔 (4시간 전)']},
+  {id:'db-reviewer',name:'db-reviewer',dept:'리뷰부서',deptKey:'review',role:'DB 리뷰어',model:'haiku',status:'idle',task:'대기',time:'--',bubble:null,history:['쿼리 최적화 제안 (2시간 전)','인덱스 분석 (3시간 전)','마이그레이션 검토 (5시간 전)']},
+  {id:'ops-agent',name:'ops-agent',dept:'운영부서',deptKey:'ops',role:'운영 에이전트',model:'sonnet',status:'idle',task:'대기',time:'--',bubble:null,history:['배포 스크립트 정비 (1시간 전)','로그 로테이션 설정 (3시간 전)','모니터링 알림 구성 (5시간 전)']},
+  {id:'monitor',name:'monitor',dept:'운영부서',deptKey:'ops',role:'모니터링',model:'sonnet',status:'idle',task:'대기',time:'--',bubble:null,history:['시스템 헬스체크 (10분 전)','CPU 사용량 알림 (1시간 전)','메모리 리포트 생성 (3시간 전)']},
+  {id:'planner',name:'planner',dept:'비즈니스부서',deptKey:'biz',role:'기획자',model:'opus',status:'idle',task:'대기',time:'--',bubble:null,history:['로드맵 v1.0 완료 (15분 전)','사용자 조사 정리 (2시간 전)','PRD 초안 작성 (4시간 전)']},
+  {id:'researcher',name:'researcher',dept:'비즈니스부서',deptKey:'biz',role:'리서처',model:'sonnet',status:'idle',task:'대기',time:'--',bubble:null,history:['경쟁사 분석 보고서 (1시간 전)','시장 트렌드 조사 (3시간 전)','기술 벤치마크 (5시간 전)']},
+];
+
+// ── Navigation ──
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + item.dataset.page).classList.add('active');
+  });
+});
+
+// ── View Toggle ──
+function toggleView(view) {
+  const btnOffice = document.getElementById('btn-office');
+  const btnList = document.getElementById('btn-list');
+  const officeView = document.getElementById('office-view');
+  const listView = document.getElementById('list-view');
+  if (view === 'office') {
+    officeView.style.display = 'block'; listView.style.display = 'none';
+    btnOffice.classList.add('primary'); btnList.classList.remove('primary');
+  } else {
+    officeView.style.display = 'none'; listView.style.display = 'block';
+    btnList.classList.add('primary'); btnOffice.classList.remove('primary');
+  }
+}
+
+// ══════════ Canvas Office Renderer ══════════
+const T = 32; // tile size
+const COLS = 24, ROWS = 16;
+const CW = COLS * T, CH = ROWS * T;
+
+// Tile types
+const W=0,F=1,C=2,B=3,D=4;
+// prettier-ignore
+const TILEMAP = [
+  [W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W],
+  [W,F,F,F,F,F,F,F,F,F,F,F,F,W,W,B,B,B,B,B,B,B,B,W],
+  [W,F,F,F,F,F,F,F,F,F,F,F,F,W,W,B,B,B,B,B,B,B,B,W],
+  [W,F,F,F,F,F,F,F,F,F,F,F,F,W,W,B,B,B,B,B,B,B,B,W],
+  [W,F,F,F,F,F,F,F,F,F,F,F,F,W,D,B,B,B,B,B,B,B,B,W],
+  [W,F,F,F,F,F,F,F,F,F,F,F,F,W,W,B,B,B,B,B,B,B,B,W],
+  [W,W,W,W,W,W,W,W,D,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W],
+  [W,F,F,F,F,F,F,W,F,F,F,F,F,F,F,W,C,C,C,C,C,C,C,W],
+  [W,F,F,F,F,F,F,W,F,F,F,F,F,F,F,W,C,C,C,C,C,C,C,W],
+  [W,F,F,F,F,F,F,W,F,F,F,F,F,F,F,W,C,C,C,C,C,C,C,W],
+  [W,W,W,W,W,W,W,W,W,W,W,D,W,W,W,W,W,W,W,D,W,W,W,W],
+  [W,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,W],
+  [W,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,W],
+  [W,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,W],
+  [W,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,F,W],
+  [W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W,W],
+];
+
+// Color palette
+const COLORS = {
+  wall: '#1a1f2e', wallTop: '#252b3d',
+  wood1: '#8B6B4A', wood2: '#7A5C3A',
+  carpet: '#2a3a6a', carpetAlt: '#243260',
+  check1: '#3a3a3a', check2: '#4a4a4a',
+  door: '#6B4A2A',
+  desk: '#6B4B2A', deskTop: '#8B6B4A',
+  monitor: '#111', monitorOn: '#0a1628', monitorBorder: '#3B82F6',
+  chairSeat: '#2a3a5a', chairBack: '#1a2a4a',
+  bookshelf: '#5C4033', books: ['#E74C3C','#3498DB','#2ECC71','#F1C40F','#9B59B6','#E67E22'],
+  sofa: '#C0392B', sofaCushion: '#E74C3C',
+  pot: '#8a4828', potRim: '#c07040', leaf: '#3a8a3a', leafLight: '#5aaa5a',
+  trash: '#666', trashRim: '#888',
+  coffee: '#444', coffeeTop: '#333',
+  clock: '#ddd', clockHand: '#333',
+  frame: '#8B6B4A', frameInner: '#2a4060',
+};
+
+const MODEL_COLORS = {
+  opus:   { head:'#FBBF24', headDk:'#D97706', body:'#D97706', bodyDk:'#92400E', leg:'#78350F' },
+  sonnet: { head:'#60A5FA', headDk:'#2563EB', body:'#2563EB', bodyDk:'#1E40AF', leg:'#1E3A8A' },
+  haiku:  { head:'#6EE7B7', headDk:'#059669', body:'#059669', bodyDk:'#065F46', leg:'#064E3B' },
+};
+
+// Furniture & prop placement  [col, row, type, extra]
+const FURNITURE = [
+  // ── 개발실 desks (row 2-5, col 2-12) ──
+  {type:'desk', x:2, y:2, agent:'architect'},
+  {type:'desk', x:5, y:2, agent:'developer-1'},
+  {type:'desk', x:2, y:4, agent:'developer-2'},
+  {type:'desk', x:5, y:4, agent:'tdd-guide'},
+  {type:'bigtable', x:8, y:3}, // 큰 테이블
+  {type:'desk', x:10, y:3, agent:'build-err'},
+  {type:'bookshelf', x:12, y:1},
+  {type:'plant', x:11, y:1},
+  {type:'frame', x:6, y:0},
+  {type:'clock', x:9, y:0},
+
+  // ── 회의실 (row 1-5, col 15-22) ──
+  {type:'sofa', x:16, y:2},
+  {type:'sofa', x:16, y:4},
+  {type:'meetingtable', x:18, y:3},
+  {type:'plant', x:22, y:1},
+  {type:'frame', x:19, y:0},
+
+  // ── 리뷰부서 (row 7-9, col 1-6) ──
+  {type:'desk', x:2, y:7, agent:'code-reviewer'},
+  {type:'desk', x:5, y:7, agent:'security-rev'},
+  {type:'desk', x:2, y:9, agent:'db-reviewer'},
+  {type:'plant', x:6, y:9},
+
+  // ── 운영부서 (row 7-9, col 8-14) ──
+  {type:'desk', x:9, y:7, agent:'ops-agent'},
+  {type:'desk', x:12, y:7, agent:'monitor'},
+  {type:'bookshelf', x:14, y:7},
+  {type:'trash', x:9, y:9},
+
+  // ── 휴게실 (row 7-9, col 17-22) ──
+  {type:'coffee', x:21, y:7},
+  {type:'sofa', x:18, y:8},
+  {type:'plant', x:22, y:9},
+  {type:'trash', x:17, y:9},
+
+  // ── 비즈니스부서 (row 11-14, col 1-22) ──
+  {type:'desk', x:3, y:12, agent:'planner'},
+  {type:'desk', x:7, y:12, agent:'researcher'},
+  {type:'bookshelf', x:11, y:11},
+  {type:'plant', x:14, y:11},
+  {type:'frame', x:17, y:10},
+  {type:'plant', x:20, y:14},
+  {type:'trash', x:22, y:14},
+];
+
+// Room labels
+const ROOM_LABELS = [
+  {text:'개발실', x:1, y:1, color:'#4A9EFF'},
+  {text:'회의실', x:15, y:1, color:'#A78BFA'},
+  {text:'리뷰부서', x:1, y:7, color:'#4ADE80'},
+  {text:'운영부서', x:8, y:7, color:'#FB923C'},
+  {text:'휴게실', x:17, y:7, color:'#2DD4BF'},
+  {text:'비즈니스부서', x:1, y:11, color:'#A78BFA'},
+];
+
+// Agent positions on canvas (pixel coords, computed from furniture)
+let agentHitboxes = []; // {x, y, w, h, agentId}
+let animFrame = 0;
+
+const canvas = document.getElementById('office-canvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('canvas-tooltip');
+
+// ── Tile drawing ──
+function drawTiles() {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const tile = TILEMAP[r][c];
+      const x = c * T, y = r * T;
+      switch (tile) {
+        case W: // wall
+          ctx.fillStyle = COLORS.wall;
+          ctx.fillRect(x, y, T, T);
+          // top highlight
+          ctx.fillStyle = COLORS.wallTop;
+          ctx.fillRect(x, y, T, 4);
+          // subtle grid
+          ctx.strokeStyle = 'rgba(255,255,255,.03)';
+          ctx.strokeRect(x, y, T, T);
+          break;
+        case F: // wood floor
+          ctx.fillStyle = (c + r) % 2 === 0 ? COLORS.wood1 : COLORS.wood2;
+          ctx.fillRect(x, y, T, T);
+          // plank lines
+          ctx.strokeStyle = 'rgba(0,0,0,.15)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x, y + T); ctx.lineTo(x + T, y + T);
+          ctx.stroke();
+          // wood grain
+          ctx.strokeStyle = 'rgba(0,0,0,.06)';
+          ctx.beginPath();
+          ctx.moveTo(x + 8, y + 4); ctx.lineTo(x + 24, y + 4);
+          ctx.moveTo(x + 4, y + 16); ctx.lineTo(x + 28, y + 16);
+          ctx.stroke();
+          break;
+        case C: // check floor (lounge)
+          ctx.fillStyle = (c + r) % 2 === 0 ? COLORS.check1 : COLORS.check2;
+          ctx.fillRect(x, y, T, T);
+          break;
+        case B: // carpet (meeting room)
+          ctx.fillStyle = (c + r) % 2 === 0 ? COLORS.carpet : COLORS.carpetAlt;
+          ctx.fillRect(x, y, T, T);
+          break;
+        case D: // door
+          ctx.fillStyle = (c + r) % 2 === 0 ? COLORS.wood1 : COLORS.wood2;
+          ctx.fillRect(x, y, T, T);
+          ctx.fillStyle = COLORS.door;
+          ctx.fillRect(x + 4, y + 2, T - 8, T - 4);
+          ctx.fillStyle = '#D4A04A';
+          ctx.fillRect(x + T/2 + 4, y + T/2 - 2, 4, 4); // doorknob
+          break;
+      }
+    }
+  }
+}
+
+// ── Furniture drawing ──
+function drawDesk(x, y, hasAgent) {
+  const px = x * T, py = y * T;
+  // Desk surface
+  ctx.fillStyle = COLORS.deskTop;
+  ctx.fillRect(px + 2, py + 10, 28, 16);
+  ctx.fillStyle = COLORS.desk;
+  ctx.fillRect(px + 2, py + 26, 4, 4);
+  ctx.fillRect(px + 26, py + 26, 4, 4);
+  // Monitor
+  if (hasAgent) {
+    const a = AGENTS.find(ag => {
+      const f = FURNITURE.find(ff => ff.agent === ag.id);
+      return f && f.x === x && f.y === y;
+    });
+    const isOn = a && a.status === 'working';
+    ctx.fillStyle = isOn ? COLORS.monitorOn : COLORS.monitor;
+    ctx.fillRect(px + 9, py + 4, 14, 10);
+    ctx.strokeStyle = isOn ? COLORS.monitorBorder : '#444';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(px + 9, py + 4, 14, 10);
+    if (isOn) {
+      // screen glow
+      ctx.fillStyle = 'rgba(59,130,246,.15)';
+      ctx.fillRect(px + 10, py + 5, 12, 8);
+      // glow lines
+      const flicker = Math.sin(animFrame * 0.05) * 0.3 + 0.7;
+      ctx.fillStyle = `rgba(59,130,246,${flicker * 0.2})`;
+      ctx.fillRect(px + 11, py + 6, 10, 2);
+      ctx.fillRect(px + 11, py + 9, 8, 1);
+    }
+    // monitor stand
+    ctx.fillStyle = '#333';
+    ctx.fillRect(px + 14, py + 14, 4, 2);
+  } else {
+    ctx.fillStyle = COLORS.monitor;
+    ctx.fillRect(px + 9, py + 4, 14, 10);
+    ctx.strokeStyle = '#444'; ctx.lineWidth = 1;
+    ctx.strokeRect(px + 9, py + 4, 14, 10);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(px + 14, py + 14, 4, 2);
+  }
+  // Chair (below desk)
+  ctx.fillStyle = COLORS.chairBack;
+  ctx.fillRect(px + 8, py + 22, 16, 4);
+  ctx.fillStyle = COLORS.chairSeat;
+  ctx.fillRect(px + 10, py + 26, 12, 4);
+}
+
+function drawBigTable(x, y) {
+  const px = x * T, py = y * T;
+  ctx.fillStyle = COLORS.deskTop;
+  ctx.fillRect(px, py + 4, T * 2, T - 8);
+  ctx.fillStyle = COLORS.desk;
+  ctx.fillRect(px + 2, py + T - 4, 4, 4);
+  ctx.fillRect(px + T*2 - 6, py + T - 4, 4, 4);
+  // chairs around
+  ctx.fillStyle = COLORS.chairSeat;
+  [px+6, px+22, px+38, px+54].forEach(cx => {
+    ctx.fillRect(cx, py - 2, 8, 6);
+  });
+}
+
+function drawMeetingTable(x, y) {
+  const px = x * T, py = y * T;
+  ctx.fillStyle = '#5C4033';
+  ctx.fillRect(px + 4, py + 4, T*2 - 8, T - 8);
+  ctx.fillStyle = COLORS.deskTop;
+  ctx.fillRect(px + 6, py + 6, T*2 - 12, T - 12);
+}
+
+function drawSofa(x, y) {
+  const px = x * T, py = y * T;
+  ctx.fillStyle = COLORS.sofa;
+  ctx.fillRect(px + 2, py + 6, T - 4, T - 10);
+  ctx.fillStyle = COLORS.sofaCushion;
+  ctx.fillRect(px + 4, py + 8, T - 8, T - 14);
+  // armrests
+  ctx.fillStyle = COLORS.sofa;
+  ctx.fillRect(px + 1, py + 4, 4, T - 6);
+  ctx.fillRect(px + T - 5, py + 4, 4, T - 6);
+}
+
+function drawBookshelf(x, y) {
+  const px = x * T, py = y * T;
+  ctx.fillStyle = COLORS.bookshelf;
+  ctx.fillRect(px + 2, py + 2, T - 4, T - 4);
+  // shelves
+  ctx.fillStyle = '#4a3020';
+  ctx.fillRect(px + 3, py + 12, T - 6, 2);
+  ctx.fillRect(px + 3, py + 22, T - 6, 2);
+  // books
+  const bw = [3,4,3,4,3,3];
+  let bx = px + 4;
+  for (let i = 0; i < 6; i++) {
+    ctx.fillStyle = COLORS.books[i];
+    ctx.fillRect(bx, py + 3, bw[i], 9);
+    ctx.fillRect(bx, py + 14, bw[i], 8);
+    bx += bw[i] + 1;
+  }
+}
+
+function drawPlant(x, y) {
+  const px = x * T + T/2, py = y * T;
+  // pot
+  ctx.fillStyle = COLORS.potRim;
+  ctx.fillRect(px - 6, py + 18, 12, 3);
+  ctx.fillStyle = COLORS.pot;
+  ctx.fillRect(px - 5, py + 21, 10, 8);
+  // leaves
+  const sway = Math.sin(animFrame * 0.03 + x) * 2;
+  ctx.fillStyle = COLORS.leaf;
+  drawLeaf(px - 6 + sway, py + 10, 8, 8);
+  ctx.fillStyle = COLORS.leafLight;
+  drawLeaf(px + sway, py + 6, 7, 10);
+  ctx.fillStyle = COLORS.leaf;
+  drawLeaf(px + 4 + sway, py + 12, 7, 7);
+}
+function drawLeaf(x, y, w, h) {
+  ctx.beginPath();
+  ctx.ellipse(x + w/2, y + h/2, w/2, h/2, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawTrash(x, y) {
+  const px = x * T, py = y * T;
+  ctx.fillStyle = COLORS.trash;
+  ctx.fillRect(px + 10, py + 12, 12, 16);
+  ctx.fillStyle = COLORS.trashRim;
+  ctx.fillRect(px + 8, py + 10, 16, 3);
+}
+
+function drawCoffee(x, y) {
+  const px = x * T, py = y * T;
+  ctx.fillStyle = COLORS.coffeeTop;
+  ctx.fillRect(px + 6, py + 8, 20, 18);
+  ctx.fillStyle = COLORS.coffee;
+  ctx.fillRect(px + 8, py + 4, 16, 6);
+  // red light
+  ctx.fillStyle = '#ff3333';
+  ctx.fillRect(px + 10, py + 20, 3, 3);
+  // steam
+  const steamY = Math.sin(animFrame * 0.08) * 3;
+  ctx.fillStyle = 'rgba(200,200,200,.15)';
+  ctx.fillRect(px + 12, py + steamY, 2, 4);
+  ctx.fillRect(px + 16, py + steamY - 2, 2, 4);
+  ctx.fillRect(px + 20, py + steamY + 1, 2, 3);
+}
+
+function drawClock(x, y) {
+  const px = x * T + T/2, py = y * T + T/2;
+  ctx.fillStyle = COLORS.clock;
+  ctx.beginPath(); ctx.arc(px, py, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = COLORS.clockHand; ctx.lineWidth = 1;
+  const angle = (animFrame * 0.01) % (Math.PI * 2);
+  ctx.beginPath(); ctx.moveTo(px, py);
+  ctx.lineTo(px + Math.cos(angle) * 4, py + Math.sin(angle) * 4);
+  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(px, py);
+  ctx.lineTo(px + Math.cos(angle * 0.08) * 3, py + Math.sin(angle * 0.08) * 3);
+  ctx.stroke();
+}
+
+function drawFrame(x, y) {
+  const px = x * T, py = y * T;
+  ctx.fillStyle = COLORS.frame;
+  ctx.fillRect(px + 4, py + 4, 24, 18);
+  ctx.fillStyle = COLORS.frameInner;
+  ctx.fillRect(px + 6, py + 6, 20, 14);
+  // simple landscape
+  ctx.fillStyle = '#1a3a20';
+  ctx.fillRect(px + 6, py + 14, 20, 6);
+  ctx.fillStyle = '#2a5a40';
+  ctx.fillRect(px + 10, py + 10, 6, 10);
+}
+
+// ── Character drawing ──
+function drawCharacter(agent, fx, fy) {
+  const mc = MODEL_COLORS[agent.model];
+  const isWorking = agent.status === 'working';
+  const px = fx * T + T/2;
+  const py = fy * T;
+
+  // idle sway / working bob
+  let bobY = 0;
+  if (isWorking) {
+    bobY = Math.sin(animFrame * 0.08) * 1;
+  } else {
+    bobY = Math.sin(animFrame * 0.03 + fx) * 1.5;
+  }
+
+  const headY = py + 2 + bobY;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,.2)';
+  ctx.beginPath();
+  ctx.ellipse(px, py + 28, 7, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Legs
+  ctx.fillStyle = mc.leg;
+  ctx.fillRect(px - 5, py + 22 + bobY, 4, 6);
+  ctx.fillRect(px + 1, py + 22 + bobY, 4, 6);
+
+  // Body
+  ctx.fillStyle = mc.body;
+  ctx.fillRect(px - 7, py + 12 + bobY, 14, 12);
+  ctx.fillStyle = mc.bodyDk;
+  ctx.fillRect(px - 7, py + 20 + bobY, 14, 4);
+
+  // Arms
+  const armSwing = isWorking ? Math.sin(animFrame * 0.15) * 3 : 0;
+  ctx.fillStyle = mc.bodyDk;
+  ctx.fillRect(px - 10, py + 13 + bobY + armSwing, 4, 10);
+  ctx.fillRect(px + 6, py + 13 + bobY - armSwing, 4, 10);
+
+  // Sonnet tie
+  if (agent.model === 'sonnet') {
+    ctx.fillStyle = '#93C5FD';
+    ctx.fillRect(px - 1, py + 12 + bobY, 2, 7);
+  }
+
+  // Head
+  ctx.fillStyle = mc.head;
+  ctx.beginPath();
+  ctx.arc(px, headY + 6, 7, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eyes - blink for idle
+  const blinkPhase = (animFrame + fx * 17) % 120;
+  const eyeH = (blinkPhase > 56 && blinkPhase < 60) ? 1 : 3;
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(px - 4, headY + 5, 2, eyeH);
+  ctx.fillRect(px + 2, headY + 5, 2, eyeH);
+
+  // Mouth
+  ctx.fillStyle = 'rgba(0,0,0,.2)';
+  ctx.fillRect(px - 2, headY + 9, 4, 1);
+
+  // Opus crown
+  if (agent.model === 'opus') {
+    ctx.fillStyle = '#FFD700';
+    ctx.fillRect(px - 5, headY - 4, 10, 3);
+    ctx.fillRect(px - 5, headY - 6, 2, 3);
+    ctx.fillRect(px - 1, headY - 7, 2, 4);
+    ctx.fillRect(px + 3, headY - 6, 2, 3);
+  }
+
+  // Haiku sprout
+  if (agent.model === 'haiku') {
+    ctx.fillStyle = '#6EE7B7';
+    ctx.fillRect(px - 1, headY - 5, 2, 5);
+    ctx.fillStyle = '#4ADE80';
+    ctx.beginPath();
+    ctx.ellipse(px + 2, headY - 5, 3, 2, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Working indicator: speech bubble
+  if (isWorking && agent.bubble) {
+    const bubbleW = agent.bubble.length * 5 + 12;
+    const bx = px - bubbleW / 2;
+    const by = headY - 18;
+    ctx.fillStyle = 'rgba(28,35,51,.9)';
+    ctx.strokeStyle = '#4ADE80';
+    ctx.lineWidth = 1;
+    roundRect(ctx, bx, by, bubbleW, 14, 4);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e6edf3';
+    ctx.font = '8px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(agent.bubble, px, by + 10);
+
+    // particles
+    for (let i = 0; i < 3; i++) {
+      const pp = (animFrame * 0.02 + i * 2) % 3;
+      const ppx = px - 8 + i * 8 + Math.sin(animFrame * 0.05 + i) * 3;
+      const ppy = headY - 20 - pp * 8;
+      const alpha = 1 - pp / 3;
+      ctx.fillStyle = `rgba(74,222,128,${alpha * 0.6})`;
+      ctx.fillRect(ppx, ppy, 2, 2);
+    }
+  }
+
+  // Status dot
+  ctx.beginPath();
+  ctx.arc(px + 8, py + 24, 3, 0, Math.PI * 2);
+  ctx.fillStyle = isWorking ? '#4ADE80' : '#4A9EFF';
+  ctx.fill();
+  ctx.strokeStyle = COLORS.wall;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Store hitbox for interaction
+  agentHitboxes.push({
+    x: px - 10, y: py - 8 + bobY,
+    w: 20, h: 38,
+    agentId: agent.id
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+}
+
+// ── Room labels ──
+function drawRoomLabels() {
+  ctx.font = 'bold 10px "Segoe UI", sans-serif';
+  ctx.textAlign = 'left';
+  ROOM_LABELS.forEach(lbl => {
+    const px = lbl.x * T + 4;
+    const py = lbl.y * T + 12;
+    ctx.fillStyle = 'rgba(0,0,0,.5)';
+    ctx.fillRect(px - 2, py - 9, ctx.measureText(lbl.text).width + 6, 13);
+    ctx.fillStyle = lbl.color;
+    ctx.fillText(lbl.text, px, py);
+  });
+}
+
+// ── Main render loop ──
+function renderOfficeCanvas() {
+  agentHitboxes = [];
+  ctx.clearRect(0, 0, CW, CH);
+
+  // 1. Tiles
+  drawTiles();
+
+  // 2. Room labels
+  drawRoomLabels();
+
+  // 3. Furniture
+  FURNITURE.forEach(f => {
+    switch (f.type) {
+      case 'desk': drawDesk(f.x, f.y, !!f.agent); break;
+      case 'bigtable': drawBigTable(f.x, f.y); break;
+      case 'meetingtable': drawMeetingTable(f.x, f.y); break;
+      case 'sofa': drawSofa(f.x, f.y); break;
+      case 'bookshelf': drawBookshelf(f.x, f.y); break;
+      case 'plant': drawPlant(f.x, f.y); break;
+      case 'trash': drawTrash(f.x, f.y); break;
+      case 'coffee': drawCoffee(f.x, f.y); break;
+      case 'clock': drawClock(f.x, f.y); break;
+      case 'frame': drawFrame(f.x, f.y); break;
+    }
+  });
+
+  // 4. Characters
+  FURNITURE.forEach(f => {
+    if (f.agent) {
+      const agent = AGENTS.find(a => a.id === f.agent);
+      if (agent) drawCharacter(agent, f.x, f.y - 1);
+    }
+  });
+
+  animFrame++;
+  requestAnimationFrame(renderOfficeCanvas);
+}
+
+// ── Canvas Interaction ──
+const canvasWrap = document.getElementById('office-canvas-wrap');
+
+canvas.addEventListener('mousemove', function(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = CW / rect.width;
+  const scaleY = CH / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+
+  let found = null;
+  for (const hb of agentHitboxes) {
+    if (mx >= hb.x && mx <= hb.x + hb.w && my >= hb.y && my <= hb.y + hb.h) {
+      found = hb; break;
+    }
+  }
+  if (found) {
+    const agent = AGENTS.find(a => a.id === found.agentId);
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX - rect.left + canvasWrap.offsetLeft + 12) + 'px';
+    tooltip.style.top = (e.clientY - rect.top + canvasWrap.offsetTop - 28) + 'px';
+    const icon = agent.model === 'opus' ? '\u{1F451}' : agent.model === 'haiku' ? '\u{1F331}' : '\u{1F454}';
+    tooltip.textContent = `${icon} ${agent.name} (${agent.model}) - ${agent.status === 'working' ? agent.task : '대기'}`;
+    canvas.style.cursor = 'pointer';
+  } else {
+    tooltip.style.display = 'none';
+    canvas.style.cursor = 'default';
+  }
+});
+
+canvas.addEventListener('click', function(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = CW / rect.width;
+  const scaleY = CH / rect.height;
+  const mx = (e.clientX - rect.left) * scaleX;
+  const my = (e.clientY - rect.top) * scaleY;
+
+  for (const hb of agentHitboxes) {
+    if (mx >= hb.x && mx <= hb.x + hb.w && my >= hb.y && my <= hb.y + hb.h) {
+      showDetail(hb.agentId);
+      break;
+    }
+  }
+});
+
+canvas.addEventListener('mouseleave', function() {
+  tooltip.style.display = 'none';
+});
+
+function renderOffice() {
+  renderOfficeCanvas();
+}
+
+// ── Render List View ──
+function renderList() {
+  const tbody = document.getElementById('list-tbody');
+  const deptColors = {'개발부서':'var(--blue)','리뷰부서':'var(--green)','운영부서':'var(--orange)','비즈니스부서':'var(--purple)'};
+  tbody.innerHTML = AGENTS.map(a => {
+    const statusDot = a.status === 'working'
+      ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite;"></span>'
+      : a.status === 'error'
+        ? '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--red);animation:pulse .8s infinite;"></span>'
+        : '<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--blue);"></span>';
+    const icon = a.model === 'opus' ? '&#x1F451; ' : a.model === 'haiku' ? '&#x1F331; ' : '&#x1F454; ';
+    return `<tr onclick="showDetail('${a.id}')">
+      <td>${statusDot}</td>
+      <td style="font-weight:600;">${icon}${a.name}</td>
+      <td><span style="color:${deptColors[a.dept]}">${a.dept}</span></td>
+      <td>${a.role}</td>
+      <td><span class="model-badge ${a.model}">${a.model.charAt(0).toUpperCase()+a.model.slice(1)}</span></td>
+      <td style="color:${a.status==='working'?'var(--green)':'var(--dim)'}">${a.task}</td>
+      <td style="color:var(--dim);">${a.time}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Agent Detail Panel ──
+function showDetail(id) {
+  const a = AGENTS.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('detail-name').textContent = (a.model==='opus'?'\u{1F451} ':a.model==='haiku'?'\u{1F331} ':'\u{1F454} ') + a.name;
+  document.getElementById('detail-role').textContent = a.role;
+  document.getElementById('detail-model').innerHTML = `<span class="model-badge ${a.model}">${a.model.charAt(0).toUpperCase()+a.model.slice(1)}</span>`;
+  document.getElementById('detail-dept').textContent = a.dept;
+  document.getElementById('detail-status').innerHTML = a.status === 'working'
+    ? '<span style="color:var(--green);">&#9679; 작업 중</span> (' + a.time + ')'
+    : '<span style="color:var(--blue);">&#9679; 대기</span>';
+  document.getElementById('detail-task').textContent = a.task;
+  document.getElementById('detail-history').innerHTML = a.history.map(h =>
+    `<div class="detail-history-item">${h}</div>`
+  ).join('');
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('detail-backdrop').classList.add('open');
+}
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('detail-backdrop').classList.remove('open');
+}
+
+// ── Populate Command Bar Agent Select ──
+function populateCmdSelect() {
+  const sel = document.getElementById('cmd-agent-select');
+  AGENTS.forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a.id;
+    opt.textContent = a.name + ' (' + a.model + ')';
+    sel.appendChild(opt);
+  });
+}
+
+function executeCommand() {
+  const agent = document.getElementById('cmd-agent-select').value;
+  const prompt = document.getElementById('cmd-prompt').value;
+  if (!agent) { alert('에이전트를 선택해주세요.'); return; }
+  if (!prompt.trim()) { alert('프롬프트를 입력해주세요.'); return; }
+  alert(`[${agent}] 에이전트에게 전송:\n${prompt}`);
+  document.getElementById('cmd-prompt').value = '';
+}
+
+// ── SVG Charts ──
+function renderRadarChart() {
+  const cx=120, cy=120, r=90;
+  const cats = ['개발','리뷰','운영','비즈니스','기획','보안'];
+  const vals = [0.9, 0.7, 0.5, 0.5, 0.6, 0.55];
+  const n = cats.length;
+  const points = (radius) => cats.map((_,i) => {
+    const angle = (Math.PI*2*i/n) - Math.PI/2;
+    return [cx + radius*Math.cos(angle), cy + radius*Math.sin(angle)];
+  });
+  const poly = (pts) => pts.map(p=>p.join(',')).join(' ');
+
+  const grid1 = points(r), grid2 = points(r*0.66), grid3 = points(r*0.33);
+  const dataPoints = vals.map((v,i) => {
+    const angle = (Math.PI*2*i/n) - Math.PI/2;
+    return [cx + r*v*Math.cos(angle), cy + r*v*Math.sin(angle)];
+  });
+  const labels = cats.map((_,i) => {
+    const angle = (Math.PI*2*i/n) - Math.PI/2;
+    const lx = cx + (r+20)*Math.cos(angle);
+    const ly = cy + (r+20)*Math.sin(angle);
+    return `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="#8b949e" font-size="11">${cats[i]}</text>`;
+  }).join('');
+  // Lines from center
+  const spokes = grid1.map(p => `<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="#30363d" stroke-width="1"/>`).join('');
+
+  const svg = `<svg width="260" height="260" viewBox="0 0 260 260">
+    ${spokes}
+    <polygon points="${poly(grid1)}" fill="none" stroke="#30363d" stroke-width="1"/>
+    <polygon points="${poly(grid2)}" fill="none" stroke="#30363d" stroke-width="1"/>
+    <polygon points="${poly(grid3)}" fill="none" stroke="#30363d" stroke-width="1"/>
+    <polygon points="${poly(dataPoints)}" fill="rgba(74,158,255,.12)" stroke="#4A9EFF" stroke-width="2"/>
+    ${dataPoints.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#4A9EFF"/>`).join('')}
+    ${labels}
+  </svg>`;
+  document.getElementById('radar-chart').innerHTML = svg;
+}
+
+function renderDonutChart() {
+  const data = [{label:'Sonnet',count:7,color:'#3B82F6'},{label:'Opus',count:3,color:'#F59E0B'},{label:'Haiku',count:2,color:'#34D399'}];
+  const total = data.reduce((s,d)=>s+d.count,0);
+  const circ = 2*Math.PI*70;
+  let offset = 0;
+  const arcs = data.map(d => {
+    const len = (d.count/total)*circ;
+    const dash = `${len} ${circ-len}`;
+    const o = offset;
+    offset += len;
+    return `<circle cx="100" cy="100" r="70" fill="none" stroke="${d.color}" stroke-width="22" stroke-dasharray="${dash}" stroke-dashoffset="${-o}" transform="rotate(-90 100 100)"/>`;
+  }).join('');
+  const legend = data.map(d => `<span style="color:${d.color};margin-right:12px;">&#9679; ${d.label} ${d.count}</span>`).join('');
+
+  const svg = `<svg width="200" height="200" viewBox="0 0 200 200">
+    <circle cx="100" cy="100" r="70" fill="none" stroke="#30363d" stroke-width="22"/>
+    ${arcs}
+    <circle cx="100" cy="100" r="52" fill="var(--bg2)"/>
+    <text x="100" y="95" text-anchor="middle" fill="var(--text)" font-size="28" font-weight="800">${total}</text>
+    <text x="100" y="112" text-anchor="middle" fill="var(--dim)" font-size="10">에이전트</text>
+  </svg>
+  <div style="font-size:11px;color:var(--dim);margin-top:10px;">${legend}</div>`;
+  document.getElementById('donut-chart').innerHTML = svg;
+}
+
+function renderToolUsageChart() {
+  const tools = [
+    {name:'Bash',count:245891,color:'var(--blue)'},
+    {name:'Edit',count:189432,color:'var(--green)'},
+    {name:'Read',count:156203,color:'var(--mint)'},
+    {name:'Write',count:78102,color:'var(--orange)'},
+    {name:'Grep',count:42310,color:'var(--purple)'},
+    {name:'Agent',count:18905,color:'var(--red)'},
+    {name:'Glob',count:9822,color:'var(--yellow)'},
+    {name:'Skill',count:6137,color:'var(--dim)'},
+  ];
+  const max = tools[0].count;
+  document.getElementById('tool-usage-chart').innerHTML = tools.map(t =>
+    `<div class="tool-bar-row">
+      <div class="tool-bar-label">${t.name}</div>
+      <div class="tool-bar" style="width:${(t.count/max)*100}%;background:${t.color};"></div>
+      <div class="tool-bar-value">${t.count.toLocaleString()}</div>
+    </div>`
+  ).join('');
+}
+
+function renderDailyChart() {
+  const days = ['3/24','3/25','3/26','3/27','3/28','3/29','3/30'];
+  const vals = [120, 340, 280, 450, 390, 520, 180];
+  const max = Math.max(...vals);
+  const w=300, h=160, px=40, py=20;
+  const pw=w-px*2, ph=h-py*2;
+
+  const pts = vals.map((v,i) => [px+i*(pw/(vals.length-1)), py+ph-(v/max)*ph]);
+  const polyline = pts.map(p=>p.join(',')).join(' ');
+  const area = `${px},${py+ph} ${polyline} ${pts[pts.length-1][0]},${py+ph}`;
+  const xLabels = days.map((d,i) => `<text x="${pts[i][0]}" y="${h-2}" text-anchor="middle" fill="#8b949e" font-size="10">${d}</text>`).join('');
+  const dots = pts.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="#4A9EFF"/>`).join('');
+  const gridLines = [0,0.25,0.5,0.75,1].map(f => {
+    const y = py+ph-f*ph;
+    return `<line x1="${px}" y1="${y}" x2="${w-px}" y2="${y}" stroke="#30363d" stroke-width="1"/>
+    <text x="${px-6}" y="${y+3}" text-anchor="end" fill="#484f58" font-size="9">${Math.round(f*max)}</text>`;
+  }).join('');
+
+  document.getElementById('daily-chart').innerHTML = `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    ${gridLines}
+    <polygon points="${area}" fill="rgba(74,158,255,.08)"/>
+    <polyline points="${polyline}" fill="none" stroke="#4A9EFF" stroke-width="2"/>
+    ${dots}${xLabels}
+  </svg>`;
+}
+
+function renderProjectActivityChart() {
+  const projects = [
+    {name:'radar-agent-office',count:342,color:'var(--blue)'},
+    {name:'claude_team_gui',count:218,color:'var(--green)'},
+    {name:'wedding-invitation',count:156,color:'var(--purple)'},
+    {name:'Gongnog',count:89,color:'var(--orange)'},
+    {name:'기타',count:45,color:'var(--dim)'},
+  ];
+  const max = projects[0].count;
+  document.getElementById('project-activity-chart').innerHTML = projects.map(p =>
+    `<div class="tool-bar-row">
+      <div class="tool-bar-label">${p.name}</div>
+      <div class="tool-bar" style="width:${(p.count/max)*100}%;background:${p.color};"></div>
+      <div class="tool-bar-value">${p.count}</div>
+    </div>`
+  ).join('');
+}
+
+// ── Pipelines ──
+function renderPipelines() {
+  const pipelines = [
+    {name:'코드리뷰',badge:'5 노드',badgeColor:'var(--green)',nodes:['code-reviewer','security-reviewer','database-reviewer','/codex-review','/gemini-review']},
+    {name:'Generator-Evaluator',badge:'3 노드',badgeColor:'var(--blue)',nodes:['Generator','/review-loop','APPROVE']},
+    {name:'검증 파이프라인',badge:'4 노드',badgeColor:'var(--orange)',nodes:['lint-check','type-check','unit-test','integration-test']},
+    {name:'비즈니스 파이프라인',badge:'3 노드',badgeColor:'var(--purple)',nodes:['market-research','competitor-analysis','report-gen']},
+    {name:'SEO 파이프라인',badge:'4 노드',badgeColor:'var(--mint)',nodes:['meta-scan','keyword-analysis','sitemap-gen','performance-audit']},
+    {name:'기획 파이프라인',badge:'3 노드',badgeColor:'var(--yellow)',nodes:['user-research','prd-draft','review-approve']},
+  ];
+  document.getElementById('pipeline-container').innerHTML = pipelines.map(p =>
+    `<div class="pipeline-card">
+      <h4>${p.name} <span class="pipe-badge" style="background:${p.badgeColor};color:#000;">${p.badge}</span></h4>
+      <div class="pipeline-flow">
+        ${p.nodes.map((n,i) => `<div class="pipeline-node${i===0?' active':''}">${n}</div>${i<p.nodes.length-1?'<span class="pipeline-arrow">&#8594;</span>':''}`).join('')}
+      </div>
+    </div>`
+  ).join('');
+}
+
+// ── Monitor ──
+function renderMonitor() {
+  const working = AGENTS.filter(a => a.status === 'working');
+  const logs = {
+    'architect': [
+      '<span class="log-dim">[14:28:01]</span> 프로젝트 구조 분석 시작',
+      '<span class="log-dim">[14:28:03]</span> <span class="log-info">Read</span> src/index.ts (142 lines)',
+      '<span class="log-dim">[14:28:05]</span> <span class="log-info">Read</span> src/config/agents.json',
+      '<span class="log-dim">[14:28:08]</span> <span class="log-info">Grep</span> "export.*class" -- 12 matches',
+      '<span class="log-dim">[14:28:12]</span> 아키텍처 분석 중...',
+      '<span class="log-dim">[14:28:15]</span> <span class="log-info">Read</span> docs/architecture.md',
+      '<span class="log-dim">[14:28:18]</span> 의존성 그래프 생성 중',
+      '<span class="log-dim">[14:28:22]</span> <span class="log-warn">WARN</span> 순환 의존성 감지: moduleA -> moduleB -> moduleA',
+      '<span class="log-dim">[14:28:25]</span> 설계 문서 초안 작성 중...',
+      '<span class="log-dim">[14:28:30]</span> <span class="log-info">Write</span> docs/design-review.md',
+    ],
+    'developer-1': [
+      '<span class="log-dim">[14:25:01]</span> API 엔드포인트 구현 시작',
+      '<span class="log-dim">[14:25:04]</span> <span class="log-info">Read</span> src/routes/index.ts',
+      '<span class="log-dim">[14:25:07]</span> <span class="log-info">Edit</span> src/routes/agents.ts',
+      '<span class="log-dim">[14:25:12]</span> <span class="log-info">Bash</span> npm run typecheck',
+      '<span class="log-dim">[14:25:18]</span> 타입 체크 통과',
+      '<span class="log-dim">[14:25:22]</span> <span class="log-info">Edit</span> src/controllers/agent-controller.ts',
+      '<span class="log-dim">[14:25:28]</span> <span class="log-info">Write</span> src/middleware/auth.ts',
+      '<span class="log-dim">[14:25:35]</span> <span class="log-info">Bash</span> npm test -- --filter agent',
+      '<span class="log-dim">[14:25:42]</span> 3 tests passed',
+      '<span class="log-dim">[14:25:45]</span> <span class="log-info">Edit</span> src/routes/agents.ts -- 라우트 추가',
+    ],
+    'code-reviewer': [
+      '<span class="log-dim">[14:22:01]</span> PR #42 리뷰 시작',
+      '<span class="log-dim">[14:22:03]</span> <span class="log-info">Bash</span> git diff main...feature/auth',
+      '<span class="log-dim">[14:22:08]</span> 변경 파일 7개, +342 -89',
+      '<span class="log-dim">[14:22:12]</span> <span class="log-info">Read</span> src/auth/jwt.ts',
+      '<span class="log-dim">[14:22:16]</span> <span class="log-warn">WARN</span> 하드코딩된 시크릿 키 발견',
+      '<span class="log-dim">[14:22:20]</span> <span class="log-info">Read</span> src/auth/middleware.ts',
+      '<span class="log-dim">[14:22:25]</span> 인증 로직 분석 중...',
+      '<span class="log-dim">[14:22:30]</span> <span class="log-info">Grep</span> "TODO|FIXME|HACK" -- 2 matches',
+      '<span class="log-dim">[14:22:35]</span> 리뷰 코멘트 작성 중...',
+      '<span class="log-dim">[14:22:40]</span> <span class="log-info">Write</span> review-comments.json',
+    ],
+  };
+
+  document.getElementById('monitor-container').innerHTML = working.map(a =>
+    `<div class="monitor-panel">
+      <div class="monitor-header">
+        <span class="m-status"></span>
+        <strong>${a.name}</strong>
+        <span style="font-size:11px;color:var(--dim);">(${a.model})</span>
+        <span class="m-time">${a.time} 경과</span>
+      </div>
+      <div class="monitor-log">${(logs[a.id]||[]).join('<br>')}</div>
+    </div>`
+  ).join('');
+}
+
+// ── Initialize ──
+function init() {
+  renderOffice();
+  renderList();
+  populateCmdSelect();
+  renderRadarChart();
+  renderDonutChart();
+  renderToolUsageChart();
+  renderDailyChart();
+  renderProjectActivityChart();
+  renderPipelines();
+  renderMonitor();
+}
+init();
+</script>
+</body>
+</html>
