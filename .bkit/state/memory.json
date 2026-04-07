@@ -17,9 +17,9 @@
       "note": "상세 설계 문서 작성 — 아키텍처, 데이터 모델, API, UI, 보안, 구현 가이드"
     }
   ],
-  "sessionCount": 95,
+  "sessionCount": 104,
   "lastSession": {
-    "startedAt": "2026-04-07T02:47:12.958Z",
+    "startedAt": "2026-04-07T07:53:35.448Z",
     "platform": "claude",
     "level": "Dynamic"
   }

@@ -12,6 +12,7 @@ export function useWebSocket(token: string) {
   const addActivity = useAgentStore((s) => s.addActivity);
   const appendChunk = useAgentStore((s) => s.appendChunk);
   const addCompletedResult = useAgentStore((s) => s.addCompletedResult);
+  const addCompletedAgent  = useAgentStore((s) => s.addCompletedAgent);
   const setApprovalRequest = useAgentStore((s) => s.setApprovalRequest);
   const addTokenCost = useAgentStore((s) => s.addTokenCost);
   const setCurrentTask = useAgentStore((s) => s.setCurrentTask);
@@ -57,6 +58,7 @@ export function useWebSocket(token: string) {
 
           case 'agentDone':
             addCompletedResult(event.agentId, event.result);
+            addCompletedAgent(event.agentId);
             addTokenCost(event.result.tokensUsed, event.result.costUsd);
             clearCurrentTask(event.agentId);
             break;
@@ -87,7 +89,7 @@ export function useWebSocket(token: string) {
         reconnectTimer.current = setTimeout(connect, delay);
       }
     };
-  }, [token, setStatus, addActivity, appendChunk, addCompletedResult, setApprovalRequest, addTokenCost, setCurrentTask, clearCurrentTask]);
+  }, [token, setStatus, addActivity, appendChunk, addCompletedResult, addCompletedAgent, setApprovalRequest, addTokenCost, setCurrentTask, clearCurrentTask]);
 
   useEffect(() => {
     connect();

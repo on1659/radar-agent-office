@@ -48,8 +48,9 @@ export function AgentsPage() {
   const chunks           = useAgentStore((s) => s.chunks);
   const selectedAgentId  = useAgentStore((s) => s.selectedAgentId);
   const setSelectedAgent = useAgentStore((s) => s.setSelectedAgent);
-  const completedResults = useAgentStore((s) => s.completedResults);
-  const currentTasks     = useAgentStore((s) => s.currentTasks);
+  const completedResults  = useAgentStore((s) => s.completedResults);
+  const completedAgents   = useAgentStore((s) => s.completedAgents);
+  const currentTasks      = useAgentStore((s) => s.currentTasks);
 
   useEffect(() => { fetchAgents(); }, [fetchAgents]);
 
@@ -84,6 +85,7 @@ export function AgentsPage() {
         {sorted.map((agent) => {
           const status    = statuses[agent.id] ?? 'idle';
           const isSelected = selectedAgentId === agent.id;
+          const isDone     = completedAgents.has(agent.id);
           const completed  = completedResults.find((r) => r.agentId === agent.id);
           const task       = currentTasks[agent.id];
 
@@ -96,14 +98,14 @@ export function AgentsPage() {
                 borderBottom: '1px solid var(--border-color)',
                 background: isSelected
                   ? 'rgba(33, 150, 243, 0.15)'
-                  : STATUS_COLORS[status].bg,
+                  : (STATUS_COLORS[status] ?? STATUS_COLORS.idle).bg,
                 cursor: 'pointer',
                 transition: 'background 0.1s',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
                 <StatusBadge status={status} />
-                <span style={{ fontWeight: 600, fontSize: '13px', color: STATUS_COLORS[status].fg }}>
+                <span style={{ fontWeight: 600, fontSize: '13px', color: (STATUS_COLORS[status] ?? STATUS_COLORS.idle).fg }}>
                   {agent.name}
                 </span>
                 <span style={{
@@ -139,8 +141,8 @@ export function AgentsPage() {
                 </div>
               )}
 
-              {/* Completion chip */}
-              {completed && status !== 'working' && (
+              {/* Completion chip — shown when completedAgents Set has this agent's id */}
+              {isDone && status !== 'working' && (
                 <div style={{ ...DONE_CHIP_STYLE, marginTop: 4, fontFamily: 'var(--font-mono)' }}>
                   ✓ 완료
                   {` | ${completed.result.tokensUsed.toLocaleString()} tokens`}

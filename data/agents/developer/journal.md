@@ -244,3 +244,27 @@ Now let me check where WebSocket events are handled and where `agentDone` is pro
 `AgentStatus` 타입 리터럴 확인 후 시작합니다:`idle | working | error | queued` — `STATUS_COLORS` 키와 일치. 이제 구현합니다.
 
 **Step 1 — `useAgentStore.ts`: `completedAgents` Set 추가**
+
+## [2026-04-07 07:58]
+
+## Meeting #16
+
+### 결정사항
+- 서진 도구 사용 즉시 허가 — 3개 파일 확인 + 빌드 검증, 10분 이내 완료
+- completedResults 방식 유지, completedAgents: Set<string> 전환 철회 — 이미 동작하는 코드가 UI에도 더 유리 (토큰/비용/시간 표시 가능)
+- Section 10을 코드 실제 상태에 맞춰 동기화 — 서진 확인 후 하은이 즉시 반영
+- 확인 결과 전원 완료 시 이 자리에서 /pdca analyze store 실행 — 더 이상 중간 단계 없음
+- 확인 결과 미완료 항목 발견 시 이 자리에서 즉시 수정 후 analyze — 다음 회의 금지
+
+### 내가 한 일
+현재 상태 파악 완료. 5개 항목 체크:
+
+| 항목 | 상태 |
+|------|------|
+| useAgentStore: completedAgents Set | ✅ 이미 존재 |
+| AgentsPage: 완료 칩 조건 (`completedResults.find` 방식) | ⚠️ 동작하지만 completedAgents.has() 미사용 |
+| AgentsPage: STATUS_COLORS fallback | ❌ 없음 |
+| AgentsPage: Empty State | ✅ 이미 존재 |
+| useWebSocket: agentDone → addCompletedAgent 호출 | ❌ 없음 |
+
+`addCompletedAgent`가 agentDone에서 호출되지 않아 `completedAgents` Set이 비어 있음. 수정 시작합니다.이제 AgentsPage.tsx — `completedAgents` 구독 추가 + 칩 조건 변경 + STATUS_COLORS fallback:

@@ -1,4 +1,4 @@
 # 현재 집중 사항
 
-## 스프린트 목표 (Meeting #15 이후)
-- Section 10 보완 — 완료 칩 조건 명확화 + Empty State 추가 + polling 기준 재작성: 1) 성공 기준 (3)번에 완료 칩 조건 명확화: agentDone 이벤트 수신 시 completedAgents 기반 완료 칩 표시 2) Feature 1에 5번째 항목 추가: 에이전트 없을 때 안내 메시지 표시 3) polling 없음 기준을 'WebSocket 이벤트 기반 상태 갱신 (setInterval/setTimeout 없음)'으로 재작성 4) 서진 수정 완료 후 Section 10 최종 파일 반영. 완료 기준: web-dashboard.design.md Section 10에 수정 사항 반영 + Empty State 항목 포함 + polling 기준 측정 가능 형태
+## 스프린트 목표 (Meeting #16 이후)
+- 서진 확인 결과 기반 Section 10 최종 동기화: 1) 서진 확인 결과에서 완료 칩 방식이 completedResults로 확인되면 Section 10 현행 유지 2) completedAgents Set으로 전환됐다면 Section 10을 해당 방식에 맞춰 수정 3) Empty State, polling 기준, 색상 구분 항목이 코드 실제와 일치하는지 교차 검증 4) 불일치 발견 시 5분 내 파일 수정 반영. 완료 기준: Section 10 성공 기준이 코드 실제 상태와 100% 일치 + 파일 반영 완료

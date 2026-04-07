@@ -618,7 +618,7 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 - [ ] WS 연결 후 에이전트 목록 표시 (Status / Name / Department / Role / Model / Current Task)
 - [ ] `statusUpdate` 이벤트 수신 시 해당 행의 StatusBadge 즉시 갱신 (WebSocket 이벤트 기반 상태 갱신 — `setInterval`/`setTimeout` 없음)
 - [ ] `working` 상태 에이전트가 목록 최상단에 고정 표시 — 정렬 순서: `working → queued → idle → error`
-- [ ] 에이전트 0명일 때 "No agents found. Check WORKSPACE_ROOT configuration." 표시
+- [ ] 에이전트 0명일 때 "No agents found. Check WORKSPACE_ROOT." 표시
 
 **구현 상태**: `AgentsPage.tsx` 완료 (173줄). working→queued→idle→error 정렬, 1/3·2/3 레이아웃, StatusBadge + LogPanel 연결, 완료 칩(tokensUsed/costUsd/duration), currentTasks 표시, 빈 상태 메시지 포함. 빌드 0 errors 통과 (2026-04-07).
 
@@ -645,7 +645,7 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 **성공 기준**:
 - [ ] `agentStream` chunk가 LogPanel에 실시간 append됨 (새 chunk마다 자동 스크롤)
 - [ ] 에이전트 선택 → LogPanel 즉시 전환 (사용자 지연 없음)
-- [ ] `agentDone` 수신 시 `useAgentStore.completedResults` 에 결과 저장 → 해당 에이전트 카드에 완료 칩 표시: `✓ 완료 | {tokens} tokens | {cost} | {duration}` — `costUsd` 필드 없으면 비용 항목 생략, 있는 필드만 표시 (`AgentResult` 타입 기준)
+- [ ] `agentDone` 수신 시 `useAgentStore.completedResults` 에 결과 저장 → 해당 에이전트 카드에 완료 칩 표시: `✓ 완료 | {tokens} tokens | ${cost} | {duration}s` — 표시 조건: `completedResults.find(r => r.agentId === agent.id)` 존재 + `status !== 'working'` (`AgentResult` 타입 기준, tokensUsed/costUsd/duration 모두 표시)
 - [ ] LogPanel 에이전트 미선택 시 "Select an agent to view logs" 빈 상태 표시
 
 **구현 상태**: `LogPanel.tsx` + `CompletionToast.tsx` 완료. `AgentsPage.tsx`에서 선택 에이전트 → LogPanel 연결 완료. 완료 칩: `tokensUsed` + `costUsd` + `duration` 표시 (`AgentResult` 타입 기준). 빌드 0 errors 통과 (2026-04-07).
@@ -658,14 +658,14 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 
 **User Story**: 파워유저로서, 에이전트 상태를 색상만으로 즉시 구분하고 싶다.
 
-**상태별 색상 명세** (StatusBadge 기준):
+**상태별 색상 명세** (CSS 변수 기준 — `theme/variables.css` 정의값):
 
-| Status | 텍스트/아이콘 색상 | 배경 색상 | 의미 |
-|--------|-----------------|----------|------|
-| `idle` | `#4CAF50` (초록) | `rgba(76, 175, 80, 0.10)` | 대기 중 |
-| `working` | `#2196F3` (파랑) + 펄싱 애니메이션 | `rgba(33, 150, 243, 0.10)` | 작업 중 |
-| `error` | `#F44336` (빨강) | `rgba(244, 67, 54, 0.10)` | 오류 |
-| `queued` | `#FFC107` (노랑) | `rgba(255, 193, 7, 0.10)` | 대기열 |
+| Status | 텍스트/아이콘 색상 (CSS 변수) | 카드 배경 색상 | 의미 |
+|--------|--------------------------|--------------|------|
+| `idle` | `var(--status-idle)` (초록 계열) | `transparent` | 대기 중 |
+| `working` | `var(--status-working)` (파랑 계열) + 펄싱 애니메이션 | `rgba(74, 158, 255, 0.05)` | 작업 중 |
+| `error` | `var(--status-error)` (빨강 계열) | `rgba(248, 113, 113, 0.05)` | 오류 |
+| `queued` | `var(--status-queued)` (노랑 계열) | `rgba(251, 191, 36, 0.05)` | 대기열 |
 
 **성공 기준**:
 - [ ] 4가지 상태가 색상만으로 즉시 구분 가능
@@ -677,7 +677,7 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 - 패널 간 간격: `gap: 16px`
 - 각 패널 내부 패딩: `padding: 12px`
 
-**구현 상태**: `STATUS_COLORS`, `DONE_CHIP_STYLE`, `LAYOUT` 상수 `AgentsPage.tsx`에 적용 완료 (Meeting #14 execution). `AgentStatus` 리터럴 `idle | working | error | queued` 타입 일치 확인. 빌드 0 errors 통과 (2026-04-07).
+**구현 상태**: `STATUS_COLORS`(CSS 변수 방식으로 `variables.css`와 통일), `DONE_CHIP_STYLE`, `LAYOUT` 상수 `AgentsPage.tsx`에 적용 완료 (Meeting #14 execution). `AgentStatus` 리터럴 `idle | working | error | queued` 타입 일치 확인. 상태 조회 시 `statuses[agent.id] ?? 'idle'` fallback 처리 포함. 빌드 0 errors 통과 (2026-04-07).
 
 ---
 
