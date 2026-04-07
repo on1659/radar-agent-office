@@ -375,3 +375,64 @@ Meeting #15에서 제가 제기한 `agent.status === 'done'` 버그 — **현재
 
 ```json
 {"summary": "AgentsPage.tsx 코드 레벨 렌더링 검증 완료. STATUS_COLORS.fg가 CSS 변수 방식으로 완전 통일(variables.css 단일 소스). bg는 rgba 직접값이지만 status변수 별도 정의 불필요한 배경색이라 문제 없음. 카드 배경·텍스트 color 모두 STATUS_COLORS[status]에 연결됨. 완료 칩 조건은 completedResults.find() 패턴으로 올바르게 구현 — 'done' 버그 없음. fallback은 status 레벨에서 이미 처리됨. Empty State 존재. 이슈
+
+## [2026-04-07 13:04]
+
+## Meeting #17
+
+### 결정사항
+- /pdca analyze store를 이번 회의 execution에서 PD가 직접 실행 — 네 번째 선언 없이 실행으로 끝낸다
+- 팀원 추가 작업 없음 — 전원 대기 후 analyze 결과 대응
+- Match Rate ≥90% → 즉시 /pdca report store 실행, 중간 확인 없이 Phase 1 최종 완료
+- Match Rate <90% → 부족 항목을 코드 수정 vs 측정 기준 문제로 즉시 분류 후 해당 팀원 대응
+- gap detector 한계(렌더링 검증 불가, 시각적 지연 측정 불가)는 PD가 결과 해석 시 감안 — 숫자만으로 기계적 판정하지 않음
+
+### 내가 한 일
+코드 확인 완료. 실제 버그를 발견했습니다.
+
+**발견된 버그 — `completed` undefined 크래시 가능**
+
+`DashboardShell.tsx`에서 `dismissResult(agentId)`가 호출되면 `completedResults` 배열에서 해당 항목이 제거됩니다. 그런데 `completedAgents` Set은 영구 기록이라 유지됩니다. 결과:
+
+- `isDone = true` (Set 유지) ✅
+- `completed = undefined` (배열에서 제거됨) ❌
+- Line 148: `completed.result.tokensUsed` → **런타임 크래시**
+
+수정합니다. 상세 정보를 `completed` 존재 조건부로 분리.이미 수정돼 있습니다. 누군가 먼저 패치했군요. 전체 상태를 정리합니다.
+
+---
+
+**도윤 — 코드 레벨 렌더링 검증 최종 보고:**
+
+### 검증 항목 전체
+
+| 항목 | 코드 위치 | 결과 |
+|------|-----------|------|
+| STATUS_COLORS.bg → 카드 배경 | `AgentsPage.tsx:101` `(STATUS_COLORS[status] ?? STATUS_COLORS.idle).bg` | ✅ 연결됨 |
+| STATUS_COLORS.fg → 텍스트 색 | `AgentsPage.tsx:108` `color: (STATUS_COLORS[status] ?? STATUS_COLORS.idle).fg` | ✅ 연결됨 |
+| Fallback `?? STATUS_COLORS.idle` | Line 101, 108 두 곳 모두 | ✅ 적용됨 |
+| CSS 변수 통일 | `fg` 전부 `var(--status-*)` | ✅ 직접 hex 혼용 없음 |
+| CSS 변수 정의 | `variables.css` — 4개 모두 | ✅ 확인 |
+| 완료 칩 조건 | `isDone && status !== 'working'`, `isDone = completedAgents.has(agent.id)` | ✅ `done` 없는 올바른 패턴 |
+| **dismiss 후 크래시 방어** | Lines 148–150 — `completed &&` 가드 이미 적용됨 | ✅ 안전 |
+| agentDone 핸들러 연결 | `useWebSocket.ts:60–61` — `addCompletedResult` + `addCompletedAgent` 둘 다 호출 | ✅ |
+| Empty State | `AgentsPage.tsx:157` `sorted.length === 0` 조건 | ✅ 존재 |
+
+### 한 가지 추가로 발견한 것 — 이미 해결됨
+
+내가 처음 우려했던 `dismissResult` 크래시 시나리오:
+- `DashboardShell.tsx`에서 dismiss → `completedResults` 배열에서 제거, `completedAgents` Set에서는 유지
+- `isDone = true`이지만 `completed = undefined` → `completed.result.tokensUsed` 크래시 가능
+
+현재 코드에서 이미 `completed &&` 가드가 lines 148–150에 적용되어 있습니다. 완료 칩은 dismiss 후에도 "✓ 완료"만 표시하고, 상세 정보(토큰/비용/시간)는 결과가 있을 때만 붙습니다. **이게 맞는 UX입니다.** 영구 기록은 유지, 상세 정보는 dismiss 이후 사라짐.
+
+### 결론
+
+**이슈 없음. 추가 수정 불필요.**
+
+STATUS_COLORS → 카드 style 연결 완전히 확인됨. CSS 변수 단일 소스 방식 유지됨. 완료 칩 로직은 dismiss 시나리오까지 방어됨. `/pdca analyze store` 실행 가능한 상태입니다.
+
+---
+
+```json
+{"summary": "AgentsPage.tsx 코드 레벨 렌더링 검증 완료. STATUS_COLORS[status].bg/.fg 모두 카드 style에 연결됨 (fallback ?? STATUS_COLORS.idle 포함). CSS 변수 방식으로 완전 통일

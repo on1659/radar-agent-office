@@ -268,3 +268,62 @@ Now let me check where WebSocket events are handled and where `agentDone` is pro
 | useWebSocket: agentDone → addCompletedAgent 호출 | ❌ 없음 |
 
 `addCompletedAgent`가 agentDone에서 호출되지 않아 `completedAgents` Set이 비어 있음. 수정 시작합니다.이제 AgentsPage.tsx — `completedAgents` 구독 추가 + 칩 조건 변경 + STATUS_COLORS fallback:
+
+## [2026-04-07 13:04]
+
+## Meeting #17
+
+### 결정사항
+- /pdca analyze store를 이번 회의 execution에서 PD가 직접 실행 — 네 번째 선언 없이 실행으로 끝낸다
+- 팀원 추가 작업 없음 — 전원 대기 후 analyze 결과 대응
+- Match Rate ≥90% → 즉시 /pdca report store 실행, 중간 확인 없이 Phase 1 최종 완료
+- Match Rate <90% → 부족 항목을 코드 수정 vs 측정 기준 문제로 즉시 분류 후 해당 팀원 대응
+- gap detector 한계(렌더링 검증 불가, 시각적 지연 측정 불가)는 PD가 결과 해석 시 감안 — 숫자만으로 기계적 판정하지 않음
+
+### 내가 한 일
+민준 씨 허가 확인했습니다. 즉시 3개 파일 확인합니다.`useWebSocket.ts` 경로를 찾겠습니다.3개 파일 확인 완료. 결과 보고합니다.
+
+**5개 항목 상태:**
+
+| 항목 | 상태 | 위치 |
+|------|------|------|
+| `completedAgents: Set<string>` 존재 | ✅ | `useAgentStore.ts:37,66` |
+| 완료 칩 조건 `completedAgents.has(agent.id)` | ✅ | `AgentsPage.tsx:88` |
+| `STATUS_COLORS` fallback `?? STATUS_COLORS.idle` | ✅ | `AgentsPage.tsx:101,108` |
+| Empty State `sorted.length === 0` | ✅ | `AgentsPage.tsx:157` |
+| `agentDone` → `addCompletedAgent` 호출 | ✅ | `useWebSocket.ts:61` |
+
+**전부 Yes. 단, 버그 하나 발견됩니다.**
+
+`AgentsPage.tsx:148-150` — `isDone`이 true여도 `completed`는 `undefined`일 수 있습니다 (dismiss 후 `completedResults`에서 제거되지만 `completedAgents` Set은 유지). 그 상태에서 `completed.result.tokensUsed`에 접근하면 런타임 에러입니다.
+
+즉시 수정합니다.빌드 검증합니다.빌드 0 errors 통과. 결과 최종 보고합니다.
+
+---
+
+**5개 항목 전부 Yes + 빌드 0 errors.**
+
+수정 내용: `AgentsPage.tsx:148-150` — dismiss 후 `completed`가 undefined일 때 런타임 에러 방지. `completed.result.*` → `completed && ...` optional 처리.
+
+도윤 씨 확인 사항:
+- CSS 변수 방식 통일 ✅ (`var(--status-*)` 사용 확인)
+- `STATUS_COLORS[status].bg/.fg` → 카드 style에 연결 ✅
+
+하은 씨 확인 사항:
+- 완료 칩은 `completedResults` + `completedAgents` **둘 다** 사용 중 — `completedAgents.has()`로 표시 여부 결정, `completedResults.find()`로 세부 정보(토큰/비용/시간) 표시. Section 10을 이 방식으로 동기화해주세요.
+
+민준 씨, `/pdca analyze store` 실행 준비됩니다.
+
+```json
+{"summary": "3개 파일 확인 완료. 5개 항목 전부 Yes. AgentsPage.tsx:148-150 런타임 버그(dismiss 후 completed undefined 접근) 수정. 빌드 0 errors 통과.", "filesChanged": ["packages/client/src/pages/AgentsPage.tsx"], "nextSteps": ["/pdca analyze store 실행 → Match Rate 확인 → ≥90% 시 /pdca report store"]}
+```
+
+---
+
+─────────────────────────────────────────────────
+📊 bkit Feature Usage
+─────────────────────────────────────────────────
+✅ Used: Read (3개 파일 확인), Glob (useWebSocket.ts 경로 탐색), Edit (completed undefined 버그 수정), Bash (tsc + build 검증)
+⏭️ Not Used: gap-detector (analyze 단계에서 사용 예정), /pdca analyze (민준 씨가 실행)
+💡 Recommended: `/pdca analyze store` → Match Rate ≥90% → `/pdca report store`
+─────────────────────────────────────────────────
