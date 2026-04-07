@@ -616,7 +616,7 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 
 **성공 기준**:
 - [ ] WS 연결 후 에이전트 목록 표시 (Status / Name / Department / Role / Model / Current Task)
-- [ ] `statusUpdate` 이벤트 수신 시 해당 행의 StatusBadge 즉시 갱신 (polling 없음)
+- [ ] `statusUpdate` 이벤트 수신 시 해당 행의 StatusBadge 즉시 갱신 (WebSocket 이벤트 기반 상태 갱신 — `setInterval`/`setTimeout` 없음)
 - [ ] `working` 상태 에이전트가 목록 최상단에 고정 표시 — 정렬 순서: `working → queued → idle → error`
 - [ ] 에이전트 0명일 때 "No agents found. Check WORKSPACE_ROOT configuration." 표시
 
@@ -645,7 +645,7 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 **성공 기준**:
 - [ ] `agentStream` chunk가 LogPanel에 실시간 append됨 (새 chunk마다 자동 스크롤)
 - [ ] 에이전트 선택 → LogPanel 즉시 전환 (사용자 지연 없음)
-- [ ] `agentDone` 수신 시 CompletionToast 표시: `✓ 완료 | {tokens} tokens | {cost} | {duration}` — `costUsd` 필드 없으면 비용 항목 생략, 있는 필드만 표시
+- [ ] `agentDone` 수신 시 `useAgentStore.completedResults` 에 결과 저장 → 해당 에이전트 카드에 완료 칩 표시: `✓ 완료 | {tokens} tokens | {cost} | {duration}` — `costUsd` 필드 없으면 비용 항목 생략, 있는 필드만 표시 (`AgentResult` 타입 기준)
 - [ ] LogPanel 에이전트 미선택 시 "Select an agent to view logs" 빈 상태 표시
 
 **구현 상태**: `LogPanel.tsx` + `CompletionToast.tsx` 완료. `AgentsPage.tsx`에서 선택 에이전트 → LogPanel 연결 완료. 완료 칩: `tokensUsed` + `costUsd` + `duration` 표시 (`AgentResult` 타입 기준). 빌드 0 errors 통과 (2026-04-07).
@@ -677,7 +677,7 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 - 패널 간 간격: `gap: 16px`
 - 각 패널 내부 패딩: `padding: 12px`
 
-**구현 상태**: 스타일 명세 확정 (도윤 Meeting #12). 서진 빌드 0 errors 통과 후 도윤이 스타일 레이어 병합 예정.
+**구현 상태**: `STATUS_COLORS`, `DONE_CHIP_STYLE`, `LAYOUT` 상수 `AgentsPage.tsx`에 적용 완료 (Meeting #14 execution). `AgentStatus` 리터럴 `idle | working | error | queued` 타입 일치 확인. 빌드 0 errors 통과 (2026-04-07).
 
 ---
 

@@ -221,3 +221,26 @@ No task assigned
 - 현재 `STATUS_BG`가 도윤 색상과 다름, `DONE_CHIP_STYLE`/`LAYOUT` 미적용
 
 `AgentsPage.tsx`에 도윤 스타일 상수 적용합니다.변경 결과를 확인합니다.코드 구조 확인 완료. 타입체크 + 빌드 실행합니다.
+
+## [2026-04-07 02:49]
+
+## Meeting #15
+
+### 결정사항
+- 완료 칩 'done' 버그 즉시 수정 — AgentStatus에 done 없음, completedAgents: Set<string> 패턴으로 전환
+- Empty State 메시지를 Phase 1에 포함하여 지금 추가
+- STATUS_COLORS fallback 추가 — STATUS_COLORS[status] ?? STATUS_COLORS.idle
+- error 상태 LogPanel은 현재 구현 확인 후 문제 시에만 수정
+- Phase 1 완료 판정 유보 — 버그 수정 후 /pdca analyze store 재실행으로 CHECK 진행
+- CSS 변수 방식과 STATUS_COLORS 직접 hex 방식이 공존 시 하나로 통일
+
+### 내가 한 일
+Now let me check where WebSocket events are handled and where `agentDone` is processed:현재 코드 구조를 파악했습니다. 변경 사항을 정리합니다:
+
+1. `useAgentStore.ts` — `completedAgents: Set<string>` 추가
+2. `useWebSocket.ts` — `agentDone`에서 `addCompletedAgent` 호출
+3. `AgentsPage.tsx` — 완료 칩 조건 변경 + `STATUS_COLORS` fallback
+
+`AgentStatus` 타입 리터럴 확인 후 시작합니다:`idle | working | error | queued` — `STATUS_COLORS` 키와 일치. 이제 구현합니다.
+
+**Step 1 — `useAgentStore.ts`: `completedAgents` Set 추가**

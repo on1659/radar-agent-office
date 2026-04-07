@@ -205,7 +205,8 @@ async function runAgentTurn(
   broadcast({ type: 'meetingMessage', meetingId, agentId, phase, content: `[${agentId}] 발언 시작...` });
 
   const agentInfo = getAgent(agentId);
-  const model = agentInfo?.model ?? 'sonnet';
+  // Meeting (토론) = opus for quality, Execution (구현) = sonnet for cost
+  const model = phase === 'execution' ? 'sonnet' : 'opus';
   const maxTurns = phase === 'execution' ? 10 : 1;
   const result = await enqueueAgent(agentId, sessionId, prompt, config.workspaceRoot, model, maxTurns);
 

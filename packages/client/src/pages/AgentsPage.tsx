@@ -14,12 +14,12 @@ const STATUS_ORDER: Record<AgentStatus, number> = {
   error:   3,
 };
 
-// Doyun's style constants (Meeting #13)
+// Doyun's style constants — fg uses CSS variables to match StatusBadge (Meeting #14 fix)
 const STATUS_COLORS: Record<AgentStatus, { fg: string; bg: string }> = {
-  idle:    { fg: '#4CAF50', bg: 'rgba(76, 175, 80, 0.1)' },
-  working: { fg: '#2196F3', bg: 'rgba(33, 150, 243, 0.1)' },
-  error:   { fg: '#F44336', bg: 'rgba(244, 67, 54, 0.1)' },
-  queued:  { fg: '#FFC107', bg: 'rgba(255, 193, 7, 0.1)' },
+  idle:    { fg: 'var(--status-idle)',    bg: 'transparent' },
+  working: { fg: 'var(--status-working)', bg: 'rgba(74, 158, 255, 0.05)' },
+  error:   { fg: 'var(--status-error)',   bg: 'rgba(248, 113, 113, 0.05)' },
+  queued:  { fg: 'var(--status-queued)',  bg: 'rgba(251, 191, 36, 0.05)' },
 } as const;
 
 const DONE_CHIP_STYLE: CSSProperties = {

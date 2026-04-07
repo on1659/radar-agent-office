@@ -226,3 +226,82 @@ No task assigned
 ─────────────────────────────────────────────────
 ✅ Used: Read (AgentsPage.tsx, agent.ts, api.ts, useAgentStore.ts, StatusBadge.tsx, variables.css 검토), Bash (tsc --noEmit 3 packages + npm run build 전체)
 ⏭️ Not Used: gap-detector
+
+## [2026-04-07 02:49]
+
+## Meeting #15
+
+### 결정사항
+- 완료 칩 'done' 버그 즉시 수정 — AgentStatus에 done 없음, completedAgents: Set<string> 패턴으로 전환
+- Empty State 메시지를 Phase 1에 포함하여 지금 추가
+- STATUS_COLORS fallback 추가 — STATUS_COLORS[status] ?? STATUS_COLORS.idle
+- error 상태 LogPanel은 현재 구현 확인 후 문제 시에만 수정
+- Phase 1 완료 판정 유보 — 버그 수정 후 /pdca analyze store 재실행으로 CHECK 진행
+- CSS 변수 방식과 STATUS_COLORS 직접 hex 방식이 공존 시 하나로 통일
+
+### 내가 한 일
+상황 파악됐습니다. 세 가지 분석 결과를 정리하겠습니다.
+
+---
+
+**분석 1 — 완료 칩 조건 검증**
+
+현재 코드 (line 87, 143):
+```typescript
+const completed = completedResults.find((r) => r.agentId === agent.id);
+// ...
+{completed && status !== 'working' && (
+```
+
+태스크 설명의 `completedAgents.has(agent.id)`는 이전 설계안 참조입니다. 현재 구현은 `completedResults.find()`로 더 완성된 방식입니다. 조건 자체는 타당합니다 — 에이전트가 다시 실행 중일 때 이전 완료 칩이 보이면 안 됩니다.
+
+`AgentResult`에서 `tokensUsed`, `costUsd`, `duration` 모두 `number` (필수 필드)이므로 옵셔널 처리 걱정도 없습니다. 칩 조건과 `DONE_CHIP_STYLE` 적용 정합성 — **이상 없음.**
+
+---
+
+**분석 2 — CSS 방식 공존 문제 발견**
+
+```
+StatusBadge: var(--status-idle) = #606070 (회색)
+STATUS_COLORS: idle.fg = #4CAF50 (초록)  ← 불일치
+```
+
+| 상태 | CSS 변수 실제값 | STATUS_COLORS hex | 결과 |
+|------|----------------|-------------------|------|
+| idle | `#606070` | `#4CAF50` | **불일치** |
+| working | `#4a9eff` | `#2196F3` | **불일치** |
+| error | `#f87171` | `#F44336` | **불일치** |
+| queued | `#fbbf24` | `#FFC107` | **불일치** |
+
+에이전트 카드에서 상태 점(StatusBadge)과 이름 텍스트 색상이 다른 색으로 렌더링됩니다. Meeting #13에서 제가 "서진 것이 더 맞다"고 결론 냈는데, STATUS_COLORS hex 값을 그에 맞게 업데이트하지 않은 채로 서진에게 전달된 겁니다. 제 실수입니다.
+
+**수정합니다.** `STATUS_COLORS.fg`를 CSS 변수 방식으로 통일하는 것이 단일 소스 원칙에 맞습니다.타입체크 돌립니다.0 errors. 수정된 최종 상태 확인합니다.깔끔합니다. 최종 보고합니다.
+
+---
+
+**도윤 — 태스크 완료 보고:**
+
+### 분석 결과 요약
+
+**1. 완료 칩 조건 정합성**
+`completedAgents.has(agent.id)`는 구 설계안 참조였습니다. 현재 코드는 `completedResults.find()`로 더 완성된 구현이고, 조건 `completed && status !== 'working'`은 정확합니다. `DONE_CHIP_STYLE` 적용도 이상 없습니다.
+
+**2. CSS 방식 공존 — 수정 완료**
+
+| 항목 | Before | After |
+|------|--------|-------|
+| idle fg | `#4CAF50` (초록) | `var(--status-idle)` = `#606070` (회색) |
+| working fg | `#2196F3` | `var(--status-working)` = `#4a9eff` |
+| error fg | `#F44336` | `var(--status-error)` = `#f87171` |
+| queued fg | `#FFC107` | `var(--status-queued)` = `#fbbf24` |
+| working bg | 10% opacity | 5% opacity (subtle) |
+| idle bg | `rgba(76,175,80,0.1)` | `transparent` |
+
+`StatusBadge`의 상태 점과 카드 텍스트 색이 이제 같은 색으로 렌더링됩니다. 단일 소스는 `variables.css`.
+
+**3. 타입체크** — 3 패키지 모두 0 errors 확인.
+
+---
+
+```json
+{"sum

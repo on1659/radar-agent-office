@@ -33,6 +33,8 @@ interface AgentState {
   // M10: Today's token/cost totals
   todayTokens: number;
   todayCost: number;
+  // Permanent record of agents that have completed at least once (survives dismiss)
+  completedAgents: Set<string>;
 
   setStatus: (agentId: string, status: AgentStatus) => void;
   setSessions: (sessions: Session[]) => void;
@@ -42,6 +44,7 @@ interface AgentState {
   clearChunks: (agentId: string) => void;
   setSelectedAgent: (agentId: string | null) => void;
   addCompletedResult: (agentId: string, result: AgentResult) => void;
+  addCompletedAgent: (agentId: string) => void;
   dismissResult: (agentId: string) => void;
   setApprovalRequest: (req: ApprovalRequest | null) => void;
   addTokenCost: (tokens: number, cost: number) => void;
@@ -60,6 +63,7 @@ export const useAgentStore = create<AgentState>((set) => ({
   currentTasks: {},
   todayTokens: 0,
   todayCost: 0,
+  completedAgents: new Set<string>(),
 
   setStatus: (agentId, status) =>
     set((state) => ({
@@ -94,6 +98,13 @@ export const useAgentStore = create<AgentState>((set) => ({
     set((state) => ({
       completedResults: [...state.completedResults, { agentId, result }],
     })),
+
+  addCompletedAgent: (agentId) =>
+    set((state) => {
+      const next = new Set(state.completedAgents);
+      next.add(agentId);
+      return { completedAgents: next };
+    }),
 
   dismissResult: (agentId) =>
     set((state) => ({
