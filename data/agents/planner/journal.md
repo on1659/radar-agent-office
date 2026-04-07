@@ -394,3 +394,27 @@ dismiss된 에이전트 카드에서 칩을 다시 렌더링 시도할 때 `comp
 
 ```json
 {"summary": "web-dashboard.design.md Section 10.4 최종 동기화 완료. 코드 실제 상태(AgentsPage.tsx) 기반으로 2개 항목 수정: (1) 완료 칩 표시 조건 — completedResults.find() 기반에서 completedAgents.
+
+## [2026-04-07 20:32]
+
+## Meeting #18
+
+### 결정사항
+- execution 전체를 /pdca analyze store 실행에 할당 — 다른 작업 일절 없음
+- 팀원 전원 대기 — 보고·질문·추가 확인 없음
+- Match Rate ≥90% → 즉시 /pdca report store 실행, Phase 1 최종 완료
+- Match Rate <90% → 코드 수정 vs 측정 기준 문제로 즉시 분류 후 해당 팀원 대응
+- gap detector 한계는 PD가 결과 해석 시 감안 — 숫자만으로 기계적 판정하지 않음
+- Phase 1 완료 판정 후 npm run dev로 실제 렌더링 검증 별도 수행
+
+### 내가 한 일
+Section 10 현재 상태 확인했습니다. analyze가 아직 실행 전이므로, 코드 실제 상태와 교차 검증해서 선제적으로 불일치를 찾겠습니다.코드 분석 완료. 두 개의 불일치를 발견했습니다.
+
+**발견한 불일치:**
+
+| 위치 | 문서 내용 | 코드 실제 | 판단 |
+|------|----------|----------|------|
+| 10.2 성공 기준 #2 | `setInterval`/`setTimeout` 없음 | `useWebSocket.ts:8,31` — heartbeat용 `setInterval` + reconnect용 `setTimeout` 존재 | **측정 기준 문제** — heartbeat/reconnect 타이머는 상태 폴링이 아님. 기준이 너무 광범위함 |
+| 10.4 ⚠️ warning | `dismiss 후 TypeError 가능 — optional chaining 필요` | `AgentsPage.tsx:148-150` — `{completed && ...}` 단락 평가로 이미 해결됨 | **표현 차이 문제** — 버그가 이미 수정되어 있음. warning 제거 필요 |
+
+두 항목 모두 **코드 수정이 아닌 문서 수정**입니다. 지금 바로 반영합니다.수정 후 검증합니다.

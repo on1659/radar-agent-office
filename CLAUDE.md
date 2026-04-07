@@ -36,6 +36,14 @@ ServerEvent: agentStream | agentQueued | agentDone | statusUpdate | workspaceUpd
 ClientEvent: runAgent | stopAgent | approvalResponse
 ```
 
+## 행동 원칙
+
+- **추측해서 행동하지 말 것.** 질문에는 답변만. 행동은 명시적 지시가 있을 때만.
+  - "이거 왜 안돼?" → 원인 설명만. 프로세스 kill 하지 않음.
+  - "어떻게 해?" → 방법 설명만. 실행하지 않음.
+  - "해줘", "실행해", "고쳐줘" → 그때 행동.
+- **돌이킬 수 없는 동작(프로세스 종료, 파일 삭제, git reset 등)은 반드시 사용자가 지시한 경우에만.**
+
 ## 규칙
 
 ### DO

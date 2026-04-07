@@ -616,7 +616,7 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 
 **성공 기준**:
 - [ ] WS 연결 후 에이전트 목록 표시 (Status / Name / Department / Role / Model / Current Task)
-- [ ] `statusUpdate` 이벤트 수신 시 해당 행의 StatusBadge 즉시 갱신 (WebSocket 이벤트 기반 상태 갱신 — `setInterval`/`setTimeout` 없음)
+- [ ] `statusUpdate` 이벤트 수신 시 해당 행의 StatusBadge 즉시 갱신 (에이전트 상태 변경은 WS 이벤트 수신으로만 처리 — 상태 폴링용 `setInterval`/`setTimeout` 없음. 하트비트·재연결 타이머는 이 기준 외)
 - [ ] `working` 상태 에이전트가 목록 최상단에 고정 표시 — 정렬 순서: `working → queued → idle → error`
 - [ ] 에이전트 0명일 때 "No agents found. Check WORKSPACE_ROOT." 표시
 
@@ -645,7 +645,7 @@ CREATE INDEX idx_activity_log_time ON activity_log(timestamp);
 **성공 기준**:
 - [ ] `agentStream` chunk가 LogPanel에 실시간 append됨 (새 chunk마다 자동 스크롤)
 - [ ] 에이전트 선택 → LogPanel 즉시 전환 (사용자 지연 없음)
-- [ ] `agentDone` 수신 시 `completedResults`에 결과 저장 + `completedAgents` Set에 agentId 추가 → 해당 에이전트 카드에 완료 칩 표시: `✓ 완료 | {tokens} tokens | ${cost} | {duration}s` — 표시 조건: `completedAgents.has(agent.id)` (isDone) + `status !== 'working'`. 칩 상세 데이터는 `completedResults.find(r => r.agentId === agent.id)`로 조회 (`AgentResult` 타입 기준, tokensUsed/costUsd/duration 모두 표시). ⚠️ 주의: `isDone=true`이지만 `completed=undefined` (dismiss 후)인 경우 `completed.result` 접근 시 TypeError 발생 가능 — optional chaining 또는 조건 추가 필요
+- [ ] `agentDone` 수신 시 `completedResults`에 결과 저장 + `completedAgents` Set에 agentId 추가 → 해당 에이전트 카드에 완료 칩 표시: `✓ 완료 | {tokens} tokens | ${cost} | {duration}s` — 표시 조건: `completedAgents.has(agent.id)` (isDone) + `status !== 'working'`. 칩 상세 데이터는 `completedResults.find(r => r.agentId === agent.id)`로 조회 (`AgentResult` 타입 기준, tokensUsed/costUsd/duration 모두 표시). dismiss 후 `completed=undefined` 상태에서도 `{completed && ...}` 단락 평가로 안전하게 처리됨 — 이 경우 "✓ 완료" 텍스트만 표시
 - [ ] LogPanel 에이전트 미선택 시 "Select an agent to view logs" 빈 상태 표시
 
 **구현 상태**: `LogPanel.tsx` + `CompletionToast.tsx` 완료. `AgentsPage.tsx`에서 선택 에이전트 → LogPanel 연결 완료. 완료 칩: `completedAgents` Set(표시 여부) + `completedResults` 배열(상세 데이터) 이중 방식으로 구현. `tokensUsed` + `costUsd` + `duration` 표시 (`AgentResult` 타입 기준). 빌드 0 errors 통과 (2026-04-07). ⚠️ dismiss 후 `completed` undefined 접근 버그 미수정 — 서진 확인 필요.

@@ -327,3 +327,18 @@ Now let me check where WebSocket events are handled and where `agentDone` is pro
 ⏭️ Not Used: gap-detector (analyze 단계에서 사용 예정), /pdca analyze (민준 씨가 실행)
 💡 Recommended: `/pdca analyze store` → Match Rate ≥90% → `/pdca report store`
 ─────────────────────────────────────────────────
+
+## [2026-04-07 20:32]
+
+## Meeting #18
+
+### 결정사항
+- execution 전체를 /pdca analyze store 실행에 할당 — 다른 작업 일절 없음
+- 팀원 전원 대기 — 보고·질문·추가 확인 없음
+- Match Rate ≥90% → 즉시 /pdca report store 실행, Phase 1 최종 완료
+- Match Rate <90% → 코드 수정 vs 측정 기준 문제로 즉시 분류 후 해당 팀원 대응
+- gap detector 한계는 PD가 결과 해석 시 감안 — 숫자만으로 기계적 판정하지 않음
+- Phase 1 완료 판정 후 npm run dev로 실제 렌더링 검증 별도 수행
+
+### 내가 한 일
+analyze 결과가 아직 없습니다 (matchRate: null). 결과 대기 전에 코드 현재 상태를 재확인해서 즉각 대응 준비를 갖추겠습니다.코드 상태를 전부 확인했습니다. 빌드 재확인합니다.
