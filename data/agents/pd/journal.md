@@ -455,3 +455,18 @@ Match Rate **92% ≥ 90%**. Meeting #17 결정에 따르면 즉시 `/pdca report
 
 ### 내가 한 일
 Analysis 파일과 Report 폴더가 없습니다. 전체 upstream 문서 체인을 로드하고 report를 생성합니다.이제 핵심 구현 파일들의 최종 상태를 확인합니다.빌드 최종 확인 후 report-generator를 호출합니다.
+
+## [2026-04-08 06:47]
+
+## Meeting #20
+
+### 결정사항
+- /pdca report store를 이번 회의 execution에서 PD가 직접 실행 — Meeting #18 구조 재적용, 단일 작업만 수행
+- Report는 현재 코드 상태 기준으로 생성 — 서진 선행 구현(펄싱 애니메이션) 포함
+- Phase 1.5 백로그 조정 — 펄싱 '선행 완료' 표시, 접근성(색각 이상 대응)을 새 1번으로 승격
+- Report 완료 즉시 Phase 1 최종 완료 선언 — 추가 확인 단계 없음
+- Phase 1 완료 후 npm run dev 렌더링 검증은 별도 수행 — Report 생성을 블로킹하지 않음
+- PD 결정 이후 같은 회의에서 결정 범위 밖 구현 금지 — 운영 원칙으로 확립
+
+### 내가 한 일
+API Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"},"request_id":"req_011CZqrd55kpx3g4WGHFgGQa"}
