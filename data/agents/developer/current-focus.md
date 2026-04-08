@@ -1,4 +1,4 @@
 # 현재 집중 사항
 
-## 스프린트 목표 (Meeting #18 이후)
-- 대기 → analyze 결과 코드 수정 항목 즉시 대응: 1) analyze 결과 대기 2) 코드 수정 필요 시 AgentsPage.tsx/useAgentStore.ts/useWebSocket.ts 범위 내 즉시 수정 3) 수정 후 tsc --noEmit + npm run build 0 errors. 완료 기준: 수정 항목 없으면 대기 완료, 있으면 빌드 0 errors 재통과
+## 스프린트 목표 (Meeting #19 이후)
+- Phase 1 대기 + Phase 1.5 펄싱 구현 준비: 1) Phase 1 추가 수정 없음 — Report 대기 2) Phase 1.5 펄싱 구현 준비: StatusBadge.tsx 단일 파일, 인라인 @keyframes, 도윤 스펙 기준 3) Report 완료 후 npm run dev 렌더링 검증 참여. 완료 기준: Phase 1 대기 완료 + Phase 1.5 구현 준비 상태 확인
