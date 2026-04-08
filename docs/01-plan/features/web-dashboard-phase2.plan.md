@@ -61,7 +61,7 @@ Phase 2.0 완료 조건을 충족한 후 Phase 2.5 착수 여부를 결정한다
 |---|---------|-------|------|
 | 1 | **OfficePage 기본 렌더링** | FR-P2-01 | 게임엔진 이식 + 2.5D 아이소메트릭 Canvas. 부서별 캐릭터 배치. 에이전트 실시간 상태(idle/working/error/queued) 반영 |
 | 2 | **이중 뷰 토글** | FR-P2-02 | OfficePage(Canvas) ↔ AgentsPage(리스트) 전환. 동일 WS 데이터 소스 공유. 전환 시 데이터 일관성 유지 |
-| 3 | **접근성 기반** | FR-P2-03 | 색각 이상 사용자 대응: 상태별 아이콘 + 텍스트 레이블. ARIA labels. 키보드 내비게이션. `prefers-reduced-motion` 대응 |
+| 3 | **접근성 기반** | FR-P2-03 | 색각 이상 사용자 대응: StatusBadge 텍스트 레이블 정렬 확인 (아이콘 불필요 — 기존 텍스트 레이블로 충분). ARIA labels. `prefers-reduced-motion` 대응. Canvas 접근성 전략 구현 |
 
 > **참고**: Phase 1.5 항목(온보딩, 활동 타임라인, 승인 모달, 설정 페이지)은 Phase 2.0과 별도로 진행 가능. 우선순위는 다음 회의에서 결정.
 
@@ -98,21 +98,21 @@ Phase 2.0 완료 조건을 충족한 후 Phase 2.5 착수 여부를 결정한다
 | FR-P2-01b | OfficePage: 비활성 탭 시 requestAnimationFrame 정지 (성능 최적화) | Medium | `GameEngine.ts` |
 | FR-P2-02 | 이중 뷰: `/office` 라우트에서 Canvas 뷰 ↔ 리스트 뷰 토글 버튼 | High | `OfficePage.tsx`, `AgentListView.tsx` |
 | FR-P2-02a | 이중 뷰: 뷰 전환 시 선택 에이전트 + LogPanel 상태 유지 (데이터 일관성) | High | `useAgentStore` |
-| FR-P2-03 | 접근성: 에이전트 상태별 아이콘 추가 (색상 외 시각 구분 수단) | High | `StatusBadge.tsx` |
-| FR-P2-03a | 접근성: 상태별 텍스트 레이블 (아이콘에 aria-label, 스크린리더 대응) | High | `StatusBadge.tsx` |
-| FR-P2-03b | 접근성: 에이전트 카드 키보드 내비게이션 (Tab 포커스 + Enter 선택) | Medium | `AgentsPage.tsx`, `OfficePage.tsx` |
-| FR-P2-03c | 접근성: `prefers-reduced-motion` 감지 시 펄싱 애니메이션 정지 | Medium | `StatusBadge.tsx` |
+| FR-P2-03 | 접근성: StatusBadge 상태별 텍스트 레이블 정렬 확인 — 색상+텍스트 병행으로 색각 이상 대응 (아이콘 추가 불필요) | High | `StatusBadge.tsx` |
+| FR-P2-03a | 접근성: `role="status"` + `aria-label={status}` 추가 (스크린리더 대응) | High | `StatusBadge.tsx` |
+| FR-P2-03b | 접근성: `prefers-reduced-motion` 감지 시 펄싱 애니메이션 정지 | High | `StatusBadge.tsx` |
+| FR-P2-03c | 접근성: Canvas OfficePage 접근성 전략 구현 (Section 6 결정 후) | Medium | `OfficePage.tsx` |
 
 ### 3.2 Non-Functional Requirements
 
 #### 접근성 (신규 — Phase 2.0 정식 포함)
 
+> **결정 기반**: Meeting #22 execution에서 도윤 검토 결과, 8px 유니코드 아이콘은 가독성 불충분 — 기존 텍스트 레이블로 색각 이상 대응 충분. NFR을 2개로 축소.
+
 | 기준 | 설명 | 측정 방법 |
 |------|------|----------|
-| **색각 이상 대응** | 색상만이 유일한 상태 구분 수단이 아닐 것 — 아이콘 또는 텍스트 레이블 병행 | 색상 없이 상태 구분 가능한지 스크린샷으로 확인 |
-| **ARIA labels** | `StatusBadge`에 `aria-label="working"` 형태 role 정보 포함 | 브라우저 Accessibility Inspector 확인 |
-| **키보드 내비게이션** | Tab으로 에이전트 카드 간 이동, Enter로 선택 가능 | 마우스 없이 에이전트 선택 → LogPanel 전환 동작 확인 |
-| **reduced-motion** | `@media (prefers-reduced-motion: reduce)` 시 CSS animation 정지 | OS 설정 변경 후 애니메이션 정지 확인 |
+| **prefers-reduced-motion** | `@media (prefers-reduced-motion: reduce)` 시 펄싱 애니메이션(`@keyframes radar-pulse`) 정지 | OS 설정 변경 후 StatusBadge 애니메이션 정지 확인 |
+| **Canvas 접근성** | OfficePage Canvas에 `role="img"` + `aria-label` + `aria-live` 영역 배치 (Section 6 전략 결정 후 구현) | 브라우저 Accessibility Inspector — Canvas 역할 및 상태 변화 알림 확인 |
 
 #### 성능
 
@@ -145,14 +145,10 @@ Phase 2.0 완료 조건을 충족한 후 Phase 2.5 착수 여부를 결정한다
 
 #### Feature 3 — 접근성 기반 (FR-P2-03)
 
-- [ ] `StatusBadge`: 각 상태(idle/working/error/queued)에 색상과 함께 아이콘 표시
-  - idle: ✓ 또는 🟢 대신 SVG/텍스트 기반 아이콘
-  - working: ⟳ 또는 스피너 아이콘
-  - error: ✕ 또는 경고 아이콘
-  - queued: ⏸ 또는 대기 아이콘
-- [ ] `StatusBadge`에 `aria-label={status}` 포함 — 스크린리더에서 상태 읽힘
-- [ ] 에이전트 카드 Tab 포커스 가능 + Enter 키로 선택 → LogPanel 전환
-- [ ] `@media (prefers-reduced-motion: reduce)` 적용 시 펄싱 애니메이션 정지
+- [ ] `StatusBadge`: 각 상태(idle/working/error/queued)에 색상 + 텍스트 레이블 병행 표시 확인 (아이콘 추가 불필요 — 기존 레이블로 색각 이상 대응 충분)
+- [ ] `StatusBadge`에 `role="status"` + `aria-label={status}` 포함 — 스크린리더에서 상태 읽힘
+- [ ] `@media (prefers-reduced-motion: reduce)` 적용 시 `@keyframes radar-pulse` 정지
+- [ ] OfficePage Canvas: `role="img"` + `aria-label` + `aria-live` 영역 — Section 6 전략 결정 후 구현
 
 ### 4.2 Quality Criteria (공통)
 
@@ -170,6 +166,7 @@ Phase 2.0 완료 조건을 충족한 후 Phase 2.5 착수 여부를 결정한다
 | **게임엔진 이식 복잡성** — `GameEngine.ts`가 VS Code webview API에 의존하는 잔재가 있을 수 있음 | High | Medium | 이식 전 `GameEngine.ts` 의존성 전수 검토. VS Code API 잔재 목록 작성 후 제거 계획 수립 |
 | **Canvas 접근성 구현 한계** — Canvas DOM 요소는 ARIA 지원이 제한적. 에이전트 캐릭터에 직접 `aria-label` 부여 불가 | High | High | Canvas 위에 hidden DOM 오버레이 전략 + 별도 설계 안건으로 등록 (Section 6 참조) |
 | **이중 뷰 상태 동기화** — OfficePage와 AgentsPage가 같은 `useAgentStore`를 공유하지 않으면 데이터 불일치 | Medium | Low | `useAgentStore` 단일 소스로 두 뷰가 공유하도록 설계. 뷰 전환 시 re-subscribe 없음 확인 |
+| **React→Canvas 브릿지 동기화** — `useAgentStore`(Zustand/React 상태)와 `GameEngine`(Canvas rAF 루프)는 업데이트 사이클이 다름. React re-render와 rAF 60fps 사이클 불일치 시 에이전트 상태가 Canvas에 늦게 반영될 수 있음 | Medium | Medium | GameEngine이 React store를 직접 구독하는 대신, 상태 변경 시 GameEngine 메서드를 명시적으로 호출하는 단방향 브릿지 설계. WS 이벤트 핸들러에서 `store.update()` + `engine.notifyAgentChanged(id)` 동시 호출 패턴 검토 |
 | **60fps 성능 저하** — 에이전트 수 증가 + 실시간 상태 갱신이 동시에 발생할 때 프레임 드롭 | Medium | Medium | Character 렌더링 dirty flag 패턴 — 상태 변경 시만 canvas 재그리기. baseline 측정 후 최적화 |
 | **recharts 도입 시점** — Phase 2.5 착수 전 충분한 운영 데이터가 없을 수 있음 | Low | Medium | Phase 2.0 완료 후 SQLite 데이터 양 확인. 최소 7일치 데이터 확보 후 Phase 2.5 착수 |
 
@@ -213,27 +210,28 @@ Canvas 접근성과 별개로 이중 뷰 전환 버튼, 에이전트 리스트(A
 
 ```tsx
 // StatusBadge 개선 예시 (Phase 2.0 FR-P2-03)
+// 아이콘 추가 불필요 — 기존 텍스트 레이블 + ARIA role 추가로 충분
 <span
   role="status"
   aria-label={`Agent status: ${status}`}
-  style={STATUS_COLORS[status]}
+  style={STATUS_COLORS[status] ?? STATUS_COLORS.idle}
 >
-  {STATUS_ICONS[status]}  {/* 아이콘 */}
-  <span style={{ marginLeft: 4 }}>{STATUS_LABELS[status]}</span>  {/* 텍스트 */}
+  {STATUS_LABELS[status]}  {/* 텍스트 레이블: idle / working / error / queued */}
 </span>
 ```
+
+> **결정 근거**: Meeting #22 execution에서 도윤이 8px 유니코드 아이콘(○/▶/✕/⏳)을 검토한 결과, StatusBadge 컨텍스트에서 가독성 불충분. 기존 텍스트 레이블이 이미 색각 이상 대응 기능을 수행하므로 별도 아이콘 추가 불필요.
 
 ---
 
 ## 7. Timeline (tentative)
 
+> **Phase 1.5 흡수 결정 (Meeting #22)**: Phase 1.5 독립 단계를 Phase 2에 흡수. 접근성은 Phase 2.0 비기능 요구사항으로 정식 포함. optional chaining은 Phase 1 마감 커밋에 포함하여 해소.
+
 | Phase | Period | Core Deliverable | Exit Condition |
 |-------|--------|------------------|----------------|
-| **Phase 1.5** | 진행 중 | 온보딩 + 활동 타임라인 + 승인 모달 + 설정 | Phase 1.5 완료 판정 후 Phase 2.0 착수 |
-| **Phase 2.0** | W9–W10 (2주) | OfficePage 기본 + 이중 뷰 + 접근성 | Section 4.1 DoD 전 항목 충족 |
+| **Phase 2.0** | W9–W10 (2주) | OfficePage 기본 + 이중 뷰 + 접근성(reduced-motion + Canvas) | Section 4.1 DoD 전 항목 충족 |
 | **Phase 2.5** | W11–W12 (2주) | 사용 통계 + 프로젝트 보드 (조건부) | Phase 2.0 완료 + 운영 데이터 확보 |
-
-> **주의**: Phase 1.5와 Phase 2.0 병렬 진행은 권장하지 않음. 서버 측 코드 변경이 Phase 1.5에서 있을 경우 Phase 2.0 Canvas 이식 시 충돌 가능성.
 
 ---
 
@@ -252,3 +250,4 @@ Canvas 접근성과 별개로 이중 뷰 전환 버튼, 에이전트 리스트(A
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
 | 0.1 | 2026-04-09 | 초안. Phase 2.0 핵심 3기능(OfficePage + 이중 뷰 + 접근성) 범위 초안. Phase 2.5 백로그 정리. Canvas 접근성 설계 안건 등록 | Ha-eun (planner) |
+| 0.2 | 2026-04-09 | Meeting #22 execution 반영. (1) 접근성 방향 조정: 아이콘 불필요 → 텍스트 레이블 유지 (도윤 8px 가독성 검토 결과) (2) NFR 4개→2개 축소: reduced-motion + Canvas 접근성 (3) Section 5 React→Canvas 브릿지 리스크 추가 (4) Phase 1.5 독립 단계 제거 → Phase 2 흡수 반영 (5) Section 6.4 아이콘 코드 예시 → 텍스트 레이블 ARIA 예시로 교체 | Ha-eun (planner) |

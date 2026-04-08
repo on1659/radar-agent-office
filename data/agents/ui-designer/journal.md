@@ -715,3 +715,71 @@ Meeting #21에서 8번 항목에 추가했던 그 이슈 — 코드에서 확인
 
 ```json
 {"summary": "Step 1 시각 확인 4개 항목 코드 레벨 전부 통과. 접근성 스펙 문서화 완료(docs/02-design/features/a11y-agent-status.design.md). 아이콘 방안: 8px 유니코드 불적합 — StatusBadg
+
+## [2026-04-08 22:09]
+
+## Meeting #23
+
+### 결정사항
+- 서진 즉시 npm run dev → Step 1 검증. 도윤 시각 확인. 10분 내 완료
+- 블로커/비블로커 분류 기준 확정 — 페이지 접근 불가=블로커(즉시 수정), 스타일 차이=비블로커(Phase 2에서 수정)
+- Step 1 통과 시 Phase 1 공식 마감 → 같은 회의에서 Phase 2 Plan 리뷰
+- 접근성 아이콘 추가 불필요 확정 — 기존 텍스트 레이블 유지. Phase 2 접근성 NFR을 2개로 축소(reduced-motion + Canvas 접근성)
+- Plan 리뷰 시 React→Canvas 브릿지 복잡도를 핵심 안건으로 다룸 — game/ 현재 상태 확인 + 브릿지 API 인터페이스 논의
+- Phase 2 Plan 리뷰 후 킥오프 여부를 이번 회의에서 결정
+
+### 내가 한 일
+코드 전체를 확인했습니다. 예상 외의 발견이 하나 있습니다.
+
+---
+
+**도윤 — Step 1 시각 확인 (코드 레벨) + Phase 2 Plan 리뷰 보고:**
+
+---
+
+### Step 1 코드 레벨 검증 (4개 항목)
+
+| # | 항목 | 코드 위치 | 결과 |
+|---|------|-----------|------|
+| 1 | 라우팅 `/agents` → `AgentsPage` | `App.tsx:78` | ✅ 연결됨 |
+| 2 | 1/3:2/3 레이아웃 | `AgentsPage.tsx:LAYOUT` — `listFlex:1`, `logFlex:2`, `gap:16px` | ✅ 정확 |
+| 3 | Empty State | `AgentsPage.tsx:157–161` — "No agents found. Check WORKSPACE_ROOT." | ✅ 존재 |
+| 4 | 사이드바 "에이전트 목록" NavLink | `Sidebar.tsx:6` — isActive 하이라이트(`var(--accent-blue)`, 600weight) | ✅ 존재 |
+
+**4개 항목 코드 레벨 이상 없음.** 서진 씨 `npm run dev` 후 브라우저 시각 확인만 남은 상태.
+
+**주의할 점 1개**: `DashboardShell.tsx:91`에서 `<main>`에 `overflow: 'auto'`가 걸려 있고 `AgentsPage.tsx:67`에서 `height: '100%'`를 사용. CSS Grid 1fr 행이 main에 명시적 높이를 주므로 기술적으로 문제없어야 하지만 — 실제 렌더링에서 스크롤 동작이 의도대로인지 브라우저 확인이 필요.
+
+---
+
+### Phase 2 Plan 리뷰 — 중요한 발견 1개
+
+`OfficePage.tsx`를 읽었는데 — **이미 이중 뷰가 구현되어 있습니다.**
+
+```tsx
+// OfficePage.tsx:12
+const [view, setView] = useState<'office' | 'list'>('office');
+
+// OfficePage.tsx:152–171
+<div style={{ display: 'flex', gap: '4px', ... }}>
+  {(['office', 'list'] as const).map(v => (
+    <button onClick={() => setView(v)}>
+      {v === 'office' ? 'Office' : 'List'}
+    </button>
+  ))}
+</div>
+```
+
+`useGameEngine`, `AgentListView`, `LogPanel`, `SpeechBubble` 모두 연결된 상태로. Canvas 렌더링 + 리스트 뷰 토글 + 로그 패널 — FR-P2-02 범위의 상당 부분이 이미 존재합니다.
+
+Phase 2 Plan이 "새로 구현"을 가정하고 있는데, 실제로는 **기존 구현 검증 + 보완 작업**이 됩니다. 하은 씨의 Plan 문서에 이 사실을 반영해야 합니다. 안 그러면 gap-detector가 OfficePage를 "미구현"으로 잡을 것입니다.
+
+---
+
+### Phase 2 Plan 항목별 UI 리뷰
+
+**FR-P2-02a — 이중 뷰 상태 동기화:**
+`selectedAgentId`는 `useAgentStore`에 있으므로 뷰 전환 시 유지됩니다. 현재 OfficePage 구현도 `useAgentStore(s => s.selectedAgentId)`를 직접 사용 중 — 단일 소스 설계 OK. 다만 OfficePage에서의 "리스트 뷰" (`view === 'list'`)와 `/agents` 라우트의 AgentsPage는 별도 URL이라는 점 — Plan에서 "이중 뷰 전환"의 의미를 명확히 해야 합니다. 같은 `/office` URL 안에서 토글인지, `/agents` ↔ `/office` 라우트 전환인지.
+
+**FR-P2-03c — prefers-reduced-motion:**
+`variables.css:56–61`에서 `@keyframes pulse`에 reduced-motion override

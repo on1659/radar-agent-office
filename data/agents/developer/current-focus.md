@@ -1,4 +1,4 @@
 # 현재 집중 사항
 
-## 스프린트 목표 (Meeting #22 이후)
-- 워킹 트리 정리 커밋 + Step 1 렌더링 검증: 1) git diff로 6개 파일 변경 확인 — 특히 본인 미수정 3개 파일(SettingsPage.tsx, handler.ts, workspace.ts) 변경 의도 판별 2) AgentsPage.tsx:148-150 optional chaining 수정 3) 의도된 변경만 커밋 (메시지에 Phase 1 마감 정리 명시) 4) npm run dev → localhost:5173/agents Step 1 검증 4개 항목(라우팅/레이아웃/Empty State/사이드바). 완료 기준: 커밋 완료(워킹 트리 깨끗) + Step 1 4개 항목 통과/실패 보고
+## 스프린트 목표 (Meeting #23 이후)
+- Step 1 렌더링 검증 실행: 1) npm run dev 실행(서버:3001 + 클라이언트:5173) 2) localhost:5173/agents Step 1 4개 항목 확인(라우팅/레이아웃/Empty State/사이드바) 3) 각 항목 통과/실패 + 콘솔 에러 유무 보고 4) Phase 2 Plan 리뷰 참여 — React→Canvas 브릿지 기술 의견 준비. 완료 기준: Step 1 4개 항목 결과 보고(블로커/비블로커 분류 포함)

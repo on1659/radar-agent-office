@@ -1,4 +1,4 @@
 # 현재 집중 사항
 
-## 스프린트 목표 (Meeting #22 이후)
-- Phase 2 Plan 초안 준비: 1) Phase 2.0 범위 초안 3개(OfficePage 기본 렌더링 + 이중 뷰 + 접근성)를 Plan 문서 초안으로 확장 2) 접근성을 비기능 요구사항 섹션으로 분리 — 도윤 초안(상태별 아이콘 + 성공 기준) 포함 3) Meeting #8 Phase 2 원래 범위(FR-07, FR-09)를 Phase 2.5 백로그로 정리 4) Canvas 접근성 이슈를 설계 안건으로 기록. 완료 기준: Phase 2 Plan 초안 골격 완성 — 다음 회의에서 리뷰 가능한 수준
+## 스프린트 목표 (Meeting #23 이후)
+- Phase 2 Plan 초안 접근성 조정 + 리뷰 준비: 1) Plan 초안 접근성 아이콘 관련 내용을 도윤 결론(아이콘 불필요, 텍스트 레이블 유지)에 맞게 조정 2) 접근성 NFR을 2개로 축소(reduced-motion + Canvas 접근성) 3) Plan 리뷰 시 Section 5 Risk에 React→Canvas 브릿지 반영 준비 4) Step 1 실패 시 블로커/비블로커 즉시 분류 지원. 완료 기준: Plan 초안 접근성 섹션 조정 완료 + 리뷰 가능 상태

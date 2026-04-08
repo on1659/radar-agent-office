@@ -563,3 +563,17 @@ Meeting #21이 완료됐고 Phase 1 Report가 생성된 상태입니다.
 ⏭️ Not Used: /pdca report (Meeting #21에서 완료), gap-detector (92% 통과 완료)
 💡 Recommended: Meeting #22 Phase 2 킥오프 → `npm run dev` 렌더링 검증
 ─────────────────────────────────────────────────
+
+## [2026-04-08 22:09]
+
+## Meeting #23
+
+### 결정사항
+- 서진 즉시 npm run dev → Step 1 검증. 도윤 시각 확인. 10분 내 완료
+- 블로커/비블로커 분류 기준 확정 — 페이지 접근 불가=블로커(즉시 수정), 스타일 차이=비블로커(Phase 2에서 수정)
+- Step 1 통과 시 Phase 1 공식 마감 → 같은 회의에서 Phase 2 Plan 리뷰
+- 접근성 아이콘 추가 불필요 확정 — 기존 텍스트 레이블 유지. Phase 2 접근성 NFR을 2개로 축소(reduced-motion + Canvas 접근성)
+- Plan 리뷰 시 React→Canvas 브릿지 복잡도를 핵심 안건으로 다룸 — game/ 현재 상태 확인 + 브릿지 API 인터페이스 논의
+- Phase 2 Plan 리뷰 후 킥오프 여부를 이번 회의에서 결정
+
+### 내가 한 일
