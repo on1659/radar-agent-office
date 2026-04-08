@@ -579,3 +579,67 @@ npm run dev  # localhost:5173/agents 접속
 
 ### 내가 한 일
 API Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"},"request_id":"req_011CZqrbWfqA2udb7GfFNF3E"}
+
+## [2026-04-08 11:53]
+
+## Meeting #21
+
+### 결정사항
+- /pdca report store를 execution에서 PD가 즉시 실행 — Meeting #18/#20 단일 작업 구조 재적용
+- 팀원 전원 대기 — 보고·질문·추가 확인 일절 없음. Meeting #20 결정에서 변경사항 없음
+- Report 완료 즉시 Phase 1 최종 완료 선언 — 추가 확인 단계 없음
+- API 529 재발 시 재시도 1회 후 판단
+
+### 내가 한 일
+코드 사전 점검을 마쳤습니다. 대기 상태 보고합니다.
+
+---
+
+**도윤 — 대기 상태 보고:**
+
+Report 대기 중. PD 민준 씨 실행 기다립니다.
+
+사전에 `StatusBadge.tsx`를 확인했습니다. 서진 씨 구현과 제 스펙 비교 결과:
+
+| 항목 | 내 스펙 (Meeting #19) | 서진 구현 | 판단 |
+|------|----------------------|-----------|------|
+| 애니메이션 방식 | `opacity 0.6↔1.0` | `box-shadow` glow (4px→12px+24px) | 서진 것이 더 나음 — glow가 "지금 작동 중"이라는 느낌을 더 잘 전달 |
+| 타이밍 | `1.5s ease-in-out infinite` | `1.5s ease-in-out infinite` | ✓ 일치 |
+| `prefers-reduced-motion` | 대응 필요 | **없음** | **렌더링 검증 체크리스트에 추가** |
+| 스타일 주입 방식 | 인라인 | `document.head` 1회 주입 + `useEffect` | 더 깔끔함 — 컴포넌트가 마운트될 때만 주입됨 |
+
+`prefers-reduced-motion` 미처리는 Phase 1.5 접근성 항목과 연결됩니다. 렌더링 검증에서 확인할 8번째 항목에 이걸 넣겠습니다.
+
+---
+
+**렌더링 검증 체크리스트 (Report 완료 후 준비 완료):**
+
+```
+1. idle 에이전트 카드 — 투명 배경, 회색 텍스트
+2. working 에이전트 카드 — 파란 배경(rgba 5%), 파란 텍스트
+3. error 에이전트 카드 — 붉은 배경(rgba 5%), 붉은 텍스트
+4. queued 에이전트 카드 — 노란 배경(rgba 5%), 노란 텍스트
+5. working 에이전트 최상단 정렬
+6. 완료 칩 — "✓ 완료 | N tokens | $X.XXX | X.Xs"
+7. Empty State — "No agents found. Check WORKSPACE_ROOT."
+8. working 배지 점 pulse 애니메이션 동작 확인
+   → (추가) prefers-reduced-motion 설정 시 정지 여부
+```
+
+---
+
+Report 나오면 즉시 합류합니다.
+
+```json
+{"summary": "대기 상태 유지. StatusBadge.tsx 사전 점검 완료 — 서진 씨 box-shadow glow 구현이 opacity보다 UX 상 더 적합. prefers-reduced-motion 미처리 확인 — 렌더링 검증 8번 항목에 포함. 렌더링 검증 체크리스트 8개 항목 준비 완료.", "filesChanged": [], "nextSteps": ["PD /pdca report store 실행 대기", "Report 완료 후 렌더링 검증 8개 항목 주도", "Phase 1.5 접근성 스펙: prefers-reduced-motion 처리 + 색각 이상 사용자 대응(아이콘/레이블)"]}
+```
+
+---
+
+─────────────────────────────────────────────────
+📊 bkit Feature Usage
+─────────────────────────────────────────────────
+✅ Used: Read (StatusBadge.tsx 사전 점검), meeting-agent (도윤 역할 — 대기 + 렌더링 검증 체크리스트 준비)
+⏭️ Not Used: /pdca report (PD 실행 예정), gap-detector (이미 완료 — 92%), Edit/Write (Phase 1 추가 수정 없음)
+💡 Recommended: PD `/pdca report store` 실행 → Phase 1 최종 완료 → `npm run dev` 렌더링 검증 8개 항목
+─────────────────────────────────────────────────
