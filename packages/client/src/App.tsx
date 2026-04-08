@@ -42,9 +42,12 @@ export function App() {
       });
   }, [setToken]);
 
-  // Auto-load workspace data once token is available
+  // Auto-load workspace data + poll every 30s for changes
   useEffect(() => {
-    if (token) { fetchAll(); }
+    if (!token) return;
+    fetchAll();
+    const interval = setInterval(() => { fetchAll(); }, 30_000);
+    return () => clearInterval(interval);
   }, [token, fetchAll]);
 
   // Loading / error state

@@ -145,9 +145,9 @@ export function AgentsPage() {
               {isDone && status !== 'working' && (
                 <div style={{ ...DONE_CHIP_STYLE, marginTop: 4, fontFamily: 'var(--font-mono)' }}>
                   ✓ 완료
-                  {completed && ` | ${completed.result.tokensUsed.toLocaleString()} tokens`}
-                  {completed && ` | $${completed.result.costUsd.toFixed(3)}`}
-                  {completed && ` | ${(completed.result.duration / 1000).toFixed(1)}s`}
+                  {completed?.result.tokensUsed != null && ` | ${completed.result.tokensUsed.toLocaleString()} tokens`}
+                  {completed?.result.costUsd != null && ` | $${completed.result.costUsd.toFixed(3)}`}
+                  {completed?.result.duration != null && ` | ${(completed.result.duration / 1000).toFixed(1)}s`}
                 </div>
               )}
             </div>

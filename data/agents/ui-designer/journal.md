@@ -643,3 +643,75 @@ Report 나오면 즉시 합류합니다.
 ⏭️ Not Used: /pdca report (PD 실행 예정), gap-detector (이미 완료 — 92%), Edit/Write (Phase 1 추가 수정 없음)
 💡 Recommended: PD `/pdca report store` 실행 → Phase 1 최종 완료 → `npm run dev` 렌더링 검증 8개 항목
 ─────────────────────────────────────────────────
+
+## [2026-04-08 17:02]
+
+## Meeting #22
+
+### 결정사항
+- Phase 1 마감 — 워킹 트리 정리 커밋(optional chaining 포함) + Step 1 렌더링 검증을 이번 회의에서 완료
+- Phase 1.5를 Phase 2에 흡수 — 별도 Phase 1.5 관리 없음. 접근성은 Phase 2 비기능 요구사항으로 정식 포함
+- Phase 2.0 범위 초안 3개 채택 — OfficePage 기본 렌더링 + 이중 뷰 전환 + 접근성. 사용 통계/프로젝트 보드는 Phase 2.5+
+- 렌더링 검증 2단계 분리 — Step 1(4개 항목) 이번 회의, Step 2(4개 항목) Phase 2 시작 전
+- 커밋 메시지에 Phase 1 마감 정리 명시 — git log에서 Phase 경계 추적 가능하게
+- Canvas 접근성 이슈를 Phase 2 설계 안건으로 기록 — DOM 없는 환경에서의 접근성은 별도 논의 필요
+
+### 내가 한 일
+코드 확인 완료. 이제 접근성 스펙 문서를 작성하겠다.
+
+**Step 1 시각 확인 결과 (코드 레벨):**
+
+| 항목 | 코드 위치 | 결과 |
+|------|-----------|------|
+| 라우팅 `/agents` → `AgentsPage` | App.tsx:79 | ✅ 연결됨 |
+| 사이드바 "에이전트 목록" 항목 | Sidebar.tsx:6 | ✅ NavLink, isActive 하이라이트 |
+| 1/3:2/3 레이아웃 | AgentsPage.tsx:36–41, 67–68 | ✅ listFlex:1, logFlex:2 |
+| Empty State | AgentsPage.tsx:157–161 | ✅ "No agents found. Check WORKSPACE_ROOT." |
+| 추가: StatusBadge 텍스트 레이블 | StatusBadge.tsx:8–12 | ✅ "Idle"/"Working"/"Error"/"Queued" 이미 포함 |---
+
+**도윤 — Step 1 시각 확인 + Phase 1.5 접근성 스펙 작업 보고:**
+
+### Step 1 시각 확인 결과 (코드 레벨)
+
+| 확인 항목 | 결과 |
+|-----------|------|
+| 라우팅 `/agents` → `AgentsPage` | ✅ App.tsx:79 |
+| 사이드바 "에이전트 목록" NavLink | ✅ Sidebar.tsx:6, isActive 하이라이트 |
+| 1/3:2/3 레이아웃 | ✅ listFlex:1, logFlex:2, gap:16px, padding:12px |
+| Empty State "No agents found." | ✅ AgentsPage.tsx:157–161 |
+
+4개 항목 전부 코드 레벨에서 정상 확인. 실제 브라우저 렌더링은 서진 씨 `npm run dev` 후 확인.
+
+---
+
+### 아이콘 방안 — 8px 가독성 판단
+
+**8px에 유니코드 아이콘 텍스트는 부적합.** ○은 12px 이상에서 겨우 식별되고, ▶·✕은 8px에서 blur, ⏳은 16px 이상이 필요하다.
+
+결정적 사실을 발견했다: **StatusBadge.tsx에 이미 `{s.label}` 텍스트 레이블이 있다.** "Idle"/"Working"/"Error"/"Queued"가 현재도 출력되고 있다. 색각 이상 사용자도 이미 텍스트로 상태를 구분할 수 있는 상태다.
+
+**권장: 아이콘 추가 없이 현재 텍스트 레이블을 유지.** 추가 아이콘은 중복이다.
+
+---
+
+### Canvas 접근성 옵션 2개 비교
+
+| | 옵션 1 — 숨겨진 DOM 텍스트 레이어 | 옵션 2 — 보조 뷰 포지셔닝 |
+|--|---|---|
+| 접근성 수준 | 스크린리더 완전 지원 | OfficePage는 비접근성, AgentsPage로 우회 |
+| 구현 복잡도 | 높음 — 60fps와 DOM 동기화 | 없음 |
+| 게임엔진 격리 원칙 | 위반 (캔버스 좌표 외부 노출) | 준수 |
+| 현재 시점 적합도 | Phase 2 이후 재검토 | 즉시 적용 가능 |
+
+**권장: 옵션 2.** OfficePage는 시각적 보조 뷰로 정의하고 접근성은 AgentsPage가 담당.
+
+---
+
+### 추가 발견: `prefers-reduced-motion` 미처리
+
+Meeting #21에서 8번 항목에 추가했던 그 이슈 — 코드에서 확인됐다.
+
+`StatusBadge.tsx`는 `radar-pulse`를 `document.head`에 직접 주입한다. `variables.css`의 `@media (prefers-reduced-motion: reduce)` override는 `pulse`에만 걸려 있고, `radar-pulse`는 적용 대상이 아니다. → Phase 1.5 접근성 2번 항목으로 등록.
+
+```json
+{"summary": "Step 1 시각 확인 4개 항목 코드 레벨 전부 통과. 접근성 스펙 문서화 완료(docs/02-design/features/a11y-agent-status.design.md). 아이콘 방안: 8px 유니코드 불적합 — StatusBadg

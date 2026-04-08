@@ -1,4 +1,4 @@
 # 현재 집중 사항
 
-## 스프린트 목표 (Meeting #21 이후)
-- 대기: Phase 1 추가 작업 없음. Report 완료 후 Phase 1.5 백로그 정리(접근성 1번, optional chaining 2번)는 별도 태스크. 완료 기준: 대기 완료
+## 스프린트 목표 (Meeting #22 이후)
+- Phase 2 Plan 초안 준비: 1) Phase 2.0 범위 초안 3개(OfficePage 기본 렌더링 + 이중 뷰 + 접근성)를 Plan 문서 초안으로 확장 2) 접근성을 비기능 요구사항 섹션으로 분리 — 도윤 초안(상태별 아이콘 + 성공 기준) 포함 3) Meeting #8 Phase 2 원래 범위(FR-07, FR-09)를 Phase 2.5 백로그로 정리 4) Canvas 접근성 이슈를 설계 안건으로 기록. 완료 기준: Phase 2 Plan 초안 골격 완성 — 다음 회의에서 리뷰 가능한 수준

@@ -32,8 +32,8 @@ shared/src/
 ### WebSocket 이벤트
 
 ```text
-ServerEvent: agentStream | agentQueued | agentDone | statusUpdate | workspaceUpdate | approvalRequest | activityEvent
-ClientEvent: runAgent | stopAgent | approvalResponse
+ServerEvent: agentStream | agentQueued | agentDone | statusUpdate | workspaceUpdate | approvalRequest | activityEvent | meetingUpdate | meetingMessage
+ClientEvent: runAgent | stopAgent | approvalResponse | startMeeting | stopMeeting
 ```
 
 ## 행동 원칙
@@ -43,6 +43,7 @@ ClientEvent: runAgent | stopAgent | approvalResponse
   - "어떻게 해?" → 방법 설명만. 실행하지 않음.
   - "해줘", "실행해", "고쳐줘" → 그때 행동.
 - **돌이킬 수 없는 동작(프로세스 종료, 파일 삭제, git reset 등)은 반드시 사용자가 지시한 경우에만.**
+- **개발 세션 자율성**: 사용자가 "응", "ㅇㅇ", "계속", "다음", "넘어가" 등 승인 패턴을 보내면 다음 개발 단계를 자율 판단하여 즉시 진행한다. 매 단계마다 허락을 구하지 않는다.
 
 ## 규칙
 

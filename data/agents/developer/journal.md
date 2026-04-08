@@ -405,3 +405,20 @@ Meeting #20 execution에서 API 오류(`529 Overloaded`)로 PD가 `/pdca report 
 **PD 결정 범위이지만, 실행이 블로킹된 상황입니다.**
 
 `/pdca report store`를 지금 실행할까요?Report phase 시작합니다. 문서들을 먼저 확인하겠습니다.설계 문서를 읽겠습니다.핵심 구현 파일 확인합니다.
+
+## [2026-04-08 17:02]
+
+## Meeting #22
+
+### 결정사항
+- Phase 1 마감 — 워킹 트리 정리 커밋(optional chaining 포함) + Step 1 렌더링 검증을 이번 회의에서 완료
+- Phase 1.5를 Phase 2에 흡수 — 별도 Phase 1.5 관리 없음. 접근성은 Phase 2 비기능 요구사항으로 정식 포함
+- Phase 2.0 범위 초안 3개 채택 — OfficePage 기본 렌더링 + 이중 뷰 전환 + 접근성. 사용 통계/프로젝트 보드는 Phase 2.5+
+- 렌더링 검증 2단계 분리 — Step 1(4개 항목) 이번 회의, Step 2(4개 항목) Phase 2 시작 전
+- 커밋 메시지에 Phase 1 마감 정리 명시 — git log에서 Phase 경계 추적 가능하게
+- Canvas 접근성 이슈를 Phase 2 설계 안건으로 기록 — DOM 없는 환경에서의 접근성은 별도 논의 필요
+
+### 내가 한 일
+변경 내용 파악됐습니다. 3개 파일 추가 확인합니다.3개 파일 모두 일관성 있는 의도된 변경입니다. `setToken`, `scheduler` exports, `config.meeting` 모두 존재합니다.
+
+이제 AgentsPage.tsx:148-150 확인 후 optional chaining 수정합니다.`completed`는 `CompletedResult` (agentId + result: AgentResult) 타입. 148-150에서 `completed &&` → optional chaining으로 변경합니다.타입체크 + 빌드합니다.빌드 0 errors. 커밋합니다.

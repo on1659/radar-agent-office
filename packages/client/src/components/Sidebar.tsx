@@ -74,7 +74,7 @@ export function Sidebar() {
         fontSize: '11px',
         color: 'var(--text-muted)',
       }}>
-        Phase 0 Build
+        Phase 1 — MVP
       </div>
     </aside>
   );

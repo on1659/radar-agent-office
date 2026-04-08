@@ -1,6 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import type { ServerEvent, ClientEvent } from '@radar/shared';
 import { useAgentStore } from '../store/useAgentStore';
+import { useWorkspaceStore } from '../store/useWorkspaceStore';
+import { useMeetingStore } from '../store/useMeetingStore';
 
 export function useWebSocket(token: string) {
   const wsRef = useRef<WebSocket | null>(null);
@@ -17,6 +19,9 @@ export function useWebSocket(token: string) {
   const addTokenCost = useAgentStore((s) => s.addTokenCost);
   const setCurrentTask = useAgentStore((s) => s.setCurrentTask);
   const clearCurrentTask = useAgentStore((s) => s.clearCurrentTask);
+
+  const fetchOverview = useWorkspaceStore((s) => s.fetchOverview);
+  const updateMeetingStatus = useMeetingStore((s) => s.updateStatus);
 
   const connect = useCallback(() => {
     if (!token) return;
@@ -75,6 +80,14 @@ export function useWebSocket(token: string) {
               reason: event.reason,
             });
             break;
+
+          case 'workspaceUpdate':
+            fetchOverview();
+            break;
+
+          case 'meetingUpdate':
+            updateMeetingStatus(event.meeting);
+            break;
         }
       } catch { /* ignore malformed */ }
     };
@@ -89,7 +102,7 @@ export function useWebSocket(token: string) {
         reconnectTimer.current = setTimeout(connect, delay);
       }
     };
-  }, [token, setStatus, addActivity, appendChunk, addCompletedResult, addCompletedAgent, setApprovalRequest, addTokenCost, setCurrentTask, clearCurrentTask]);
+  }, [token, setStatus, addActivity, appendChunk, addCompletedResult, addCompletedAgent, setApprovalRequest, addTokenCost, setCurrentTask, clearCurrentTask, fetchOverview, updateMeetingStatus]);
 
   useEffect(() => {
     connect();

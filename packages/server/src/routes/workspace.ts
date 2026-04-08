@@ -30,4 +30,14 @@ export async function workspaceRoutes(app: FastifyInstance) {
     const data = await scanWorkspace(config.workspaceRoot);
     return data.rules;
   });
+
+  // GET /api/config — server runtime config (non-sensitive)
+  app.get('/api/config', async () => ({
+    port: config.port,
+    workspaceRoot: config.workspaceRoot,
+    claudeCliPath: config.claudeCliPath,
+    maxConcurrent: config.maxConcurrent,
+    meetingIntervalHours: config.meeting.intervalHours,
+    meetingAutoStart: config.meeting.autoStart,
+  }));
 }

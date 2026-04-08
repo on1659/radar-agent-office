@@ -1,9 +1,10 @@
 // Design Ref: §4.3 — WebSocket connection management
 import type { FastifyInstance } from 'fastify';
 import type { WebSocket } from '@fastify/websocket';
-import type { ServerEvent } from '@radar/shared';
+import type { ServerEvent, ClientEvent } from '@radar/shared';
 import { config } from '../config.js';
 import { isClientEvent, serializeEvent } from './events.js';
+import { triggerMeetingNow, stopScheduler, getSchedulerStatus } from '../services/scheduler.js';
 
 const clients = new Set<WebSocket>();
 
@@ -45,10 +46,18 @@ export async function registerWebSocket(app: FastifyInstance) {
       if (messageCount > config.ws.rateLimit) return;
 
       try {
-        const data = JSON.parse(raw.toString());
-        if (isClientEvent(data)) {
-          // Emit to app-level handler (module-2 will implement agent execution)
-          app.log.info({ event: data.type, agentId: (data as { agentId?: string }).agentId }, 'ws:clientEvent');
+        const data = JSON.parse(raw.toString()) as ClientEvent;
+        if (!isClientEvent(data)) return;
+
+        app.log.info({ event: data.type }, 'ws:clientEvent');
+
+        if (data.type === 'startMeeting') {
+          triggerMeetingNow(data.agenda).catch((err: Error) => {
+            app.log.error({ err }, 'Meeting trigger failed via WS');
+          });
+        } else if (data.type === 'stopMeeting') {
+          stopScheduler();
+          broadcast({ type: 'meetingUpdate', meeting: getSchedulerStatus() });
         }
       } catch {
         // ignore malformed messages
