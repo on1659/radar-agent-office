@@ -652,3 +652,60 @@ Phase 2 Plan 리뷰 중 예상치 못한 사실을 발견했습니다.
 | OfficePage Phase 2 Gap Analysis | 미실행 | 필수 |
 
 **Pha
+
+## [2026-04-09 08:27]
+
+## Meeting #25
+
+### 결정사항
+- 이번 회의: 코드 확인 + 범위 확정만. Plan 수정·킥오프는 다음 회의(Meeting #26)로 분리 — Phase 1 교훈 적용
+- L1/L2/L2.5/L3 프레임워크 채택 — 하은 L2.5(설계 문서 일치) 보완 포함. OfficePage는 현재 L1
+- Phase 2 성격: '빌드'가 아니라 '검증+보강'. OfficePage 핵심 2기능 기구현 확인됨
+- Phase 2 순서 확정: Step 1(현상 파악+결함 수정) → Step 2(성공 기준 정의+갭 측정) → Step 3(보강). 성공 기준 정의가 gap-detector 전에 선행
+- 접근성 reduced-motion+ARIA는 결함 수정 → Step 1에서 L2 검증과 병렬 처리. Canvas 접근성만 Step 3 보강
+- Canvas 접근성 옵션 2 확정 — 보조 뷰 포지셔닝 + aria-label 안내. 게임엔진 격리 원칙 준수
+- Plan 수정 방향 옵션 A 확정 — 기존 초안에서 구현→검증+보강 전환 + Section 2.0 기구현 상태 추가
+- 대표님용 시각 확인 체크리스트 승인 — 포트 42817, AgentsPage 3항목 + OfficePage 사전 확인 1항목
+
+### 내가 한 일
+전체 현황을 파악했습니다. PD 결정을 내리겠습니다.
+
+---
+
+## Meeting #25 — PD Execution: Phase 2.0 범위 최종 확정
+
+### 코드 상태 확인 결과 요약
+
+| FR | Plan 가정 | 실제 상태 |
+|----|-----------|----------|
+| FR-P2-01 (OfficePage 기본 렌더링) | "구현 필요" | **OfficePage.tsx 227줄 완성** — Canvas 2개, useAgentStore 연결, speech bubbles, camera 전부 |
+| FR-P2-02 (이중 뷰 토글) | "구현 필요" | **OfficePage.tsx:12 완성** — `useState<'office'\|'list'>`, Office/List 버튼, AgentListView 전환 |
+| `/office` 라우트 | "추가 필요" | **App.tsx:79 이미 존재** |
+| React→Canvas 브릿지 | "설계 필요" | **useGameEngine 훅 완성** — agentStatuses → engine.updateAllAgentStatuses() |
+| VS Code 의존성 | "감사 필요" | **0건** (Meeting #23 확인) |
+| FR-P2-03 접근성 | "구현 필요" | **미구현** — ARIA 없음, prefers-reduced-motion 없음 |
+
+**결론**: Phase 2.0 핵심 기능 2개(OfficePage + 이중 뷰)는 이미 구현 완료. 실제 남은 작업은 접근성 하나.
+
+---
+
+### Phase 2.0 범위 최종 확정
+
+**기존 Plan의 전제가 틀렸습니다.** FR-P2-01과 FR-P2-02를 새로 만들어야 한다는 가정 하에 2주를 배정했지만, 둘 다 이미 구현 완료입니다. Plan을 현실에 맞게 전면 재조정합니다.
+
+**Phase 2.0 실제 남은 작업:**
+
+| # | 항목 | 담당 | 우선순위 | 예상 규모 |
+|---|------|------|---------|---------|
+| 1 | **OfficePage Gap Analysis** | 서진 + PD | High | `/pdca analyze web-dashboard-phase2` |
+| 2 | **FR-P2-03a**: StatusBadge `role="status"` + `aria-label` | 서진 | High | StatusBadge.tsx 5줄 |
+| 3 | **FR-P2-03b**: `prefers-reduced-motion` 대응 | 서진 | High | KEYFRAME_ID 스타일 수정 |
+| 4 | **FR-P2-03c**: Canvas 접근성 — 전략 C+B 채택 | 서진 | Medium | OfficePage.tsx aria-live 영역 |
+
+**Canvas 접근성 전략 결정**: Section 6.3의 C+B 혼합을 채택합니다. Hidden overlay(전략 A)는 Canvas 위치 추적 로직이 필요해 구현 복잡도가 과도합니다. `role="img"` + `aria-label` + `aria-live` 영역으로 충분합니다.
+
+---
+
+### 하은에게 Plan 수정 지시
+
+Plan 문서(`docs/01-plan/features/web-dashboard-phase2.plan.md`)를 다음과 같이 수정합니다.

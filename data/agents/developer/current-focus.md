@@ -1,4 +1,4 @@
 # 현재 집중 사항
 
-## 스프린트 목표 (Meeting #24 이후)
-- Step 1 검증 실행 (5개 항목): 1) npm run dev 실행 — 컴파일 에러 0 + Local: http://localhost:5173 출력 확인 2) 5개 항목 코드+런타임 검증: dev server 기동, 라우팅(App.tsx /agents), 레이아웃(listFlex:1 logFlex:2), Empty State(sorted.length===0 분기+메시지), 사이드바(Sidebar.tsx NavLink /agents) 3) 콘솔/터미널 에러 유무 보고 4) 블로커/비블로커 분류 즉시 보고. 완료 기준: 5개 항목 결과 보고 — 블로커 0개 = Phase 1 마감 조건 충족
+## 스프린트 목표 (Meeting #25 이후)
+- OfficePage + game/ 코드 확인 + 기술 평가: 1) OfficePage.tsx(227줄), useGameEngine 훅, game/ 디렉토리 전체 코드 확인 2) L2 가능성 판단 — npm run dev 시 OfficePage 런타임 에러 예상 여부 3) useGameEngine 브릿지 API 품질 평가 — Phase 2 수정 필요 부분 식별 4) game/ 재사용 가능 범위 판단. 완료 기준: L1→L2 예상 블로커 목록 + useGameEngine 브릿지 품질 3줄 요약 + game/ 재사용 범위 판정

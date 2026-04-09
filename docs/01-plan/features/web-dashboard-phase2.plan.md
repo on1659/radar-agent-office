@@ -57,11 +57,15 @@ Phase 2.0 완료 조건을 충족한 후 Phase 2.5 착수 여부를 결정한다
 
 ### 2.1 Phase 2.0 — In Scope (핵심 3기능)
 
-| # | Feature | FR ID | 설명 |
-|---|---------|-------|------|
-| 1 | **OfficePage 기본 렌더링** | FR-P2-01 | 게임엔진 이식 + 2.5D 아이소메트릭 Canvas. 부서별 캐릭터 배치. 에이전트 실시간 상태(idle/working/error/queued) 반영 |
-| 2 | **이중 뷰 토글** | FR-P2-02 | OfficePage(Canvas) ↔ AgentsPage(리스트) 전환. 동일 WS 데이터 소스 공유. 전환 시 데이터 일관성 유지 |
-| 3 | **접근성 기반** | FR-P2-03 | 색각 이상 사용자 대응: StatusBadge 텍스트 레이블 정렬 확인 (아이콘 불필요 — 기존 텍스트 레이블로 충분). ARIA labels. `prefers-reduced-motion` 대응. Canvas 접근성 전략 구현 |
+> **⚠️ 0.4 업데이트 (Meeting #25 코드 확인)**: FR-P2-01과 FR-P2-02는 이미 구현 완료 상태입니다.
+> `/office` 라우트(App.tsx:79), OfficePage.tsx 227줄(Canvas 2개 + 이중 뷰 토글 + useAgentStore 연결), useGameEngine 브릿지 전부 존재.
+> Phase 2.0 실제 작업은 **Gap Analysis + 접근성(FR-P2-03)만** 남아 있습니다.
+
+| # | Feature | FR ID | 설명 | 구현 상태 |
+|---|---------|-------|------|---------|
+| 1 | **OfficePage 기본 렌더링** | FR-P2-01 | 2.5D 아이소메트릭 Canvas, 부서별 캐릭터 배치, 에이전트 실시간 상태 반영 | **구현 완료** — Gap Analysis 필요 |
+| 2 | **이중 뷰 토글** | FR-P2-02 | OfficePage(Canvas) ↔ 리스트 뷰 전환, 동일 WS 데이터 소스 공유, 전환 시 데이터 일관성 | **구현 완료** — Gap Analysis 필요 |
+| 3 | **접근성 기반** | FR-P2-03 | StatusBadge ARIA(`role="status"` + `aria-label`), `prefers-reduced-motion` 대응, Canvas 접근성 전략 C+B 구현 | **미구현** — 이번 Phase 핵심 작업 |
 
 > **참고**: Phase 1.5 항목(온보딩, 활동 타임라인, 승인 모달, 설정 페이지)은 Phase 2.0과 별도로 진행 가능. 우선순위는 다음 회의에서 결정.
 
@@ -130,18 +134,24 @@ Phase 2.0 완료 조건을 충족한 후 Phase 2.5 착수 여부를 결정한다
 
 #### Feature 1 — OfficePage 기본 렌더링 (FR-P2-01)
 
-- [ ] `/office` 라우트 접속 시 Canvas 렌더링 — 2.5D 아이소메트릭 타일맵 (20×14) 표시
-- [ ] 에이전트가 부서별로 Canvas 위에 배치되어 표시됨
-- [ ] WS `statusUpdate` 이벤트 수신 시 해당 캐릭터 상태 즉시 반영 (polling 없음)
-- [ ] 비활성 탭 시 `rAF` 정지 확인 (Chrome DevTools Performance)
-- [ ] 빌드 0 errors (`tsc --noEmit` + `npm run build` 통과)
+> **구현 완료 (Meeting #25 확인)** — OfficePage.tsx 227줄. Gap Analysis로 설계 일치 여부 검증 필요.
+
+- [x] `/office` 라우트 접속 — App.tsx:79
+- [x] Canvas 렌더링 — tileMapRef + characterRef Canvas 2개
+- [x] 에이전트 부서별 배치 — useGameEngine + agentStatuses 연결
+- [x] WS 상태 즉시 반영 — useAgentStore 구독 + speech bubbles
+- [x] 빌드 0 errors — Phase 1 완료 시점 통과
+- [ ] **Gap Analysis 통과** — `/pdca analyze web-dashboard-phase2` ≥ 90%
 
 #### Feature 2 — 이중 뷰 토글 (FR-P2-02)
 
-- [ ] `/office`에 "오피스 뷰 / 리스트 뷰" 전환 버튼 표시
-- [ ] 전환 시 같은 에이전트 목록 + 상태 데이터 표시 (WS 소스 동일)
-- [ ] 전환 후 선택 에이전트 + LogPanel 내용 유지
-- [ ] 전환 즉시 완료 (시각적 지연 없음)
+> **구현 완료 (Meeting #25 확인)** — OfficePage.tsx:12 `useState<'office'|'list'>`. Gap Analysis 필요.
+
+- [x] Office / List 전환 버튼 — OfficePage.tsx:153-172
+- [x] 전환 시 같은 agentStatuses 데이터 공유 — useAgentStore 단일 소스
+- [x] 선택 에이전트(`selectedAgentId`) 유지 — Zustand store
+- [x] 전환 즉시 완료 — React state toggle
+- [ ] **Gap Analysis 통과** — `/pdca analyze web-dashboard-phase2` ≥ 90%
 
 #### Feature 3 — 접근성 기반 (FR-P2-03)
 
@@ -194,15 +204,18 @@ HTML `<canvas>` 요소는 DOM 트리에서 불투명한 픽셀 버퍼입니다. 
 | **B. aria-describedby + 범례** | Canvas 외부에 에이전트 상태 목록 DOM 테이블 배치. `<canvas aria-describedby="agent-status-list">` | 구현 단순 | Canvas 자체는 내비게이션 불가. 리스트 뷰와 중복 |
 | **C. 리스트 뷰 우선** | OfficePage Canvas는 장식용(role="img"). 접근성 필요 시 이중 뷰 토글로 AgentsPage(리스트 뷰) 사용 권장 | 구현 없음 | 색각 이상 사용자에게 "다른 뷰로 가세요" 안내 필요 |
 
-### 6.3 권장 방향 (초안 — 확정 필요)
+### 6.3 전략 확정 (Meeting #25 PD 결정)
 
-**전략 C + B 혼합**:
-- Canvas에 `role="img"` + `aria-label="에이전트 오피스 뷰"` 부여
-- Canvas 아래 `aria-live="polite"` 영역에 상태 변화 알림 ("architect agent is now working")
-- 키보드 사용자에게는 이중 뷰 토글로 리스트 뷰 접근 유도
-- `prefers-reduced-motion` 시 60fps 루프를 정지하고 정적 스냅샷 렌더링
+**전략 C + B 혼합 채택** — 구현 복잡도와 접근성 수준의 균형.
 
-> **결정 필요**: 전략 A(hidden overlay) vs C+B(혼합) — 구현 복잡성 vs 접근성 수준 트레이드오프. 도윤 씨와 설계 회의 필요.
+전략 A(hidden overlay)는 Canvas 위 에이전트 픽셀 위치를 DOM에 동기화해야 하므로 구현 복잡도가 과도합니다. 이중 뷰(AgentsPage)가 이미 완전한 접근 가능 리스트 뷰로 존재하므로, Canvas는 시각적 보조 뷰로 포지셔닝하는 것이 타당합니다.
+
+**구현 사항:**
+- `<canvas ref={tileMapRef}>` 래퍼 div에 `role="img"` + `aria-label="에이전트 오피스 — 실시간 작업 현황"`
+- Canvas 컨테이너 외부에 `aria-live="polite"` 영역 — 에이전트 상태 변화 시 텍스트 알림
+  - 예: `{workingAgent} is now working`, `{errorAgent} has errored`
+- `prefers-reduced-motion` 시 rAF 루프 정지 → 정적 스냅샷 유지
+- 키보드 사용자에게 이중 뷰 List 버튼 포커스 안내
 
 ### 6.4 Canvas 외부 접근성 (즉시 적용 가능)
 
@@ -237,12 +250,14 @@ Canvas 접근성과 별개로 이중 뷰 전환 버튼, 에이전트 리스트(A
 
 ## 8. Next Steps
 
-1. [ ] **이 문서 리뷰** — Meeting #23에서 3개 핵심 기능 범위 확정 (PD 승인)
+1. [x] ~~**이 문서 리뷰**~~ — **완료 (Meeting #25)**: PD가 직접 코드 확인 후 범위 재조정. FR-P2-01/02 구현 완료 상태 반영.
 2. [x] ~~**Phase 1.5 우선순위 결정**~~ — Phase 2에 흡수 완료 (Meeting #22 결정)
-3. [ ] **Canvas 접근성 전략 결정** — Section 6.3 전략 A vs C+B 결정 (도윤 설계 안건)
-4. [x] ~~**GameEngine.ts VS Code 의존성 감사**~~ — **완료 (Meeting #23 사전 확인)**: VS Code 의존성 없음. `@radar/shared` 타입만 import. 이식 준비 완료.
-5. [x] ~~**React→Canvas 브릿지 설계**~~ — **완료**: `useGameEngine` 훅 + `GameEngine.updateAllAgentStatuses()` 이미 구현. OfficePage에서 훅 사용하면 됨.
-6. [ ] **Phase 2.0 Design 문서 작성** — Plan 확정 후 `/pdca design web-dashboard-phase2`
+3. [x] ~~**Canvas 접근성 전략 결정**~~ — **완료 (Meeting #25)**: C+B 혼합 채택 확정. Section 6.3 업데이트.
+4. [x] ~~**GameEngine.ts VS Code 의존성 감사**~~ — **완료 (Meeting #23)**: 의존성 없음.
+5. [x] ~~**React→Canvas 브릿지 설계**~~ — **완료**: `useGameEngine` 이미 구현.
+6. [ ] **OfficePage Gap Analysis** — `/pdca analyze web-dashboard-phase2` 실행 (Meeting #26)
+7. [ ] **FR-P2-03 접근성 구현** — StatusBadge ARIA + prefers-reduced-motion + Canvas aria-live (Meeting #26 킥오프 후)
+8. [ ] **Phase 2.0 Design 문서 작성** — Plan 확정 후 `/pdca design web-dashboard-phase2`
 
 ---
 
@@ -253,3 +268,4 @@ Canvas 접근성과 별개로 이중 뷰 전환 버튼, 에이전트 리스트(A
 | 0.1 | 2026-04-09 | 초안. Phase 2.0 핵심 3기능(OfficePage + 이중 뷰 + 접근성) 범위 초안. Phase 2.5 백로그 정리. Canvas 접근성 설계 안건 등록 | Ha-eun (planner) |
 | 0.2 | 2026-04-09 | Meeting #22 execution 반영. (1) 접근성 방향 조정: 아이콘 불필요 → 텍스트 레이블 유지 (도윤 8px 가독성 검토 결과) (2) NFR 4개→2개 축소: reduced-motion + Canvas 접근성 (3) Section 5 React→Canvas 브릿지 리스크 추가 (4) Phase 1.5 독립 단계 제거 → Phase 2 흡수 반영 (5) Section 6.4 아이콘 코드 예시 → 텍스트 레이블 ARIA 예시로 교체 | Ha-eun (planner) |
 | 0.3 | 2026-04-09 | Meeting #23 사전 확인 결과 반영. (1) Section 5 '게임엔진 이식 복잡성' 리스크 Close — VS Code 의존성 없음 확인 (2) Section 5 'React→Canvas 브릿지' 리스크 Low로 하향 — `useGameEngine` + `updateAllAgentStatuses()` 브릿지 이미 구현 완료 확인 (3) Section 8 Next Steps 2개 항목 완료 표시 (Phase 1.5 흡수, 게임엔진 감사) + React→Canvas 브릿지 설계 항목 추가 후 즉시 완료 표시 | Ha-eun (planner) |
+| 0.4 | 2026-04-09 | Meeting #25 PD 코드 확인 결과 반영 (OfficePage.tsx + App.tsx 직접 확인). (1) Section 2.1: FR-P2-01/FR-P2-02 "구현 완료" 상태로 업데이트, 구현 상태 컬럼 추가 (2) Section 4.1: Feature 1/2 DoD 체크박스를 실제 구현 증거 기반으로 업데이트 — Gap Analysis 통과를 최종 기준으로 변경 (3) Section 6.3: Canvas 접근성 전략 확정 — C+B 혼합 채택, 전략 A(hidden overlay) 복잡도 과도로 기각 | Min-jun (PD) |

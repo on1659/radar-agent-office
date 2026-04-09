@@ -499,3 +499,76 @@ Phase 2 Plan 리뷰로 바로 넘어갈 준비됩니다. 하은 씨 `web-dashboa
 📊 bkit Feature Usage
 ─────────────────────────────────────────────────
 ✅ Used: Read (App.tsx, Sidebar.tsx, AgentsPage.tsx, vite.config.ts, variables.css
+
+## [2026-04-09 08:27]
+
+## Meeting #25
+
+### 결정사항
+- 이번 회의: 코드 확인 + 범위 확정만. Plan 수정·킥오프는 다음 회의(Meeting #26)로 분리 — Phase 1 교훈 적용
+- L1/L2/L2.5/L3 프레임워크 채택 — 하은 L2.5(설계 문서 일치) 보완 포함. OfficePage는 현재 L1
+- Phase 2 성격: '빌드'가 아니라 '검증+보강'. OfficePage 핵심 2기능 기구현 확인됨
+- Phase 2 순서 확정: Step 1(현상 파악+결함 수정) → Step 2(성공 기준 정의+갭 측정) → Step 3(보강). 성공 기준 정의가 gap-detector 전에 선행
+- 접근성 reduced-motion+ARIA는 결함 수정 → Step 1에서 L2 검증과 병렬 처리. Canvas 접근성만 Step 3 보강
+- Canvas 접근성 옵션 2 확정 — 보조 뷰 포지셔닝 + aria-label 안내. 게임엔진 격리 원칙 준수
+- Plan 수정 방향 옵션 A 확정 — 기존 초안에서 구현→검증+보강 전환 + Section 2.0 기구현 상태 추가
+- 대표님용 시각 확인 체크리스트 승인 — 포트 42817, AgentsPage 3항목 + OfficePage 사전 확인 1항목
+
+### 내가 한 일
+전체 코드 확인 완료. 평가 결과를 보고합니다.
+
+---
+
+## 서진 — OfficePage + game/ 기술 평가 보고
+
+### 핵심 발견: 예상보다 훨씬 많이 구현돼 있습니다
+
+**OfficePage.tsx** 는 이미 Phase 2.0 요구사항의 대부분을 구현한 상태입니다.
+
+| Phase 2.0 요구사항 | 코드 상태 |
+|---|---|
+| OfficePage 기본 렌더링 (Canvas 타일맵) | ✅ `/office` 라우트 + 이소메트릭 렌더링 완전 구현 |
+| AgentsPage ↔ OfficePage 이중 뷰 전환 | ✅ `view` state로 office/list 토글 이미 존재 |
+| useAgentStore 구독 | ✅ `statuses`, `chunks`, `selectedAgentId`, `currentTasks` 전부 연결됨 |
+| SpeechBubble (working 에이전트) | ✅ `currentTasks` 기반 말풍선 이미 렌더링 |
+
+---
+
+### L1→L2 예상 블로커 목록
+
+**블로커: 1개 (크리티컬은 아님)**
+
+| 항목 | 상세 | 심각도 |
+|---|---|---|
+| **실제 에이전트 ID에 스프라이트 없음** | `Character.ts:69` — `PIXEL_DATA[agentId] ?? null`. 실제 에이전트 ID(`jimin`/`hyunwoo` 등 하드코딩된 8개 외)는 `pixelChar = null` → `draw()` 조기 리턴 → Canvas에 아무것도 안 그려짐. 페이지 크래시는 아니지만 **실제 에이전트가 보이지 않음** | Medium |
+
+**비블로커**
+
+| 항목 | 상세 |
+|---|---|
+| Empty workspace 시 demo 에이전트 표시 | `OfficePage:36-39` — wsAgents와 skills 모두 없으면 8개 하드코딩 ID로 폴백. 워크스페이스 연결 후 이 분기는 사라짐 |
+| `engine?.getCamera().isDragging` | 옵셔널 체이닝 이미 적용됨. null-safe |
+
+---
+
+### useGameEngine 브릿지 API 품질 3줄 요약
+
+**설계 완성도: 높음. Phase 2 수정 필요 없음.**
+
+1. **React→Canvas 브릿지가 이미 존재한다.** `useGameEngine` 훅이 `agentStatuses: Record<string, AgentStatus>`를 입력으로 받아 `useEffect`에서 `engine.updateAllAgentStatuses()`를 호출하는 패턴이 이미 구현 완료. 이전 회의에서 "브릿지 설계가 Phase 2의 핵심 기술 과제"라고 했지만, **이미 해결된 문제다.**
+2. **프레임 동기화 설계가 깔끔하다.** `onPositionUpdate` 콜백 → `setFrameTick` → `speechBubbles` useMemo 재계산 패턴으로, RAF 루프와 React 렌더링 사이클이 분리된 채로 말풍선 위치를 정확히 동기화한다.
+3. **게임엔진 격리 원칙 준수.** `game/` 전체에서 React import 없음. Camera, TileMap, Character, Pathfinder 모두 순수 TypeScript + Canvas API. VS Code 잔재 없음.
+
+---
+
+### game/ 재사용 범위 판정
+
+**전부 재사용 가능. 새로 만들 것 없음.**
+
+| 모듈 | 상태 | Phase 2 수정 필요 |
+|---|---|---|
+| `GameEngine.ts` | ✅ 완전 작동. `updateAllAgentStatuses` API 존재 | ❌ 없음 |
+| `TileMap.ts` | ✅ 20×14 오피스 레이아웃, 캐시 렌더링, `isWalkable` | ❌ 없음 |
+| `Character.ts` | ✅ A* 이동, 방향별 스프라이트, 상태별 시각 효과 | ⚠️ 실제 에이전트 ID용 픽셀 데이터 추가 필요 |
+| `Camera.ts` | ✅ 마우스 드래그 패닝, 휠 스크롤, 경계 클램핑 | ❌ 없음 |
+| `Pathfinder.

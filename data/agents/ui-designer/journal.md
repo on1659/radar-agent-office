@@ -860,3 +860,22 @@ Phase 2 Plan이 "새로 구현"을 가정하고 있는데, 실제로는 **기존
 Plan 문서 Section 5에 "이중 뷰 상태 동기화 리스크 — 낮음"으로 기록돼 있는데, **낮음으로 볼 수 없습니다.**
 
 `OfficePage.tsx`를 보니 이미 `selectedAge
+
+## [2026-04-09 08:27]
+
+## Meeting #25
+
+### 결정사항
+- 이번 회의: 코드 확인 + 범위 확정만. Plan 수정·킥오프는 다음 회의(Meeting #26)로 분리 — Phase 1 교훈 적용
+- L1/L2/L2.5/L3 프레임워크 채택 — 하은 L2.5(설계 문서 일치) 보완 포함. OfficePage는 현재 L1
+- Phase 2 성격: '빌드'가 아니라 '검증+보강'. OfficePage 핵심 2기능 기구현 확인됨
+- Phase 2 순서 확정: Step 1(현상 파악+결함 수정) → Step 2(성공 기준 정의+갭 측정) → Step 3(보강). 성공 기준 정의가 gap-detector 전에 선행
+- 접근성 reduced-motion+ARIA는 결함 수정 → Step 1에서 L2 검증과 병렬 처리. Canvas 접근성만 Step 3 보강
+- Canvas 접근성 옵션 2 확정 — 보조 뷰 포지셔닝 + aria-label 안내. 게임엔진 격리 원칙 준수
+- Plan 수정 방향 옵션 A 확정 — 기존 초안에서 구현→검증+보강 전환 + Section 2.0 기구현 상태 추가
+- 대표님용 시각 확인 체크리스트 승인 — 포트 42817, AgentsPage 3항목 + OfficePage 사전 확인 1항목
+
+### 내가 한 일
+태스크를 확인했습니다. 현재 코드 상태를 먼저 파악합니다.코드 파악이 됐습니다. OfficePage, GameEngine, SpeechBubble, StatusBadge, Phase 2 Plan 모두 확인했습니다. 이제 세 가지 산출물을 작성합니다.코드 전체를 파악했습니다. 이제 세 가지 산출물을 작성합니다.
+
+**1번 — OfficePage UI L2→L3 판정 기준 + 대표님 체크리스트****2번 — Canvas 접근성 옵션 2 구현 스펙** — a11y 문서에 추가합니다.
