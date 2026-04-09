@@ -57,15 +57,14 @@ Phase 2.0 완료 조건을 충족한 후 Phase 2.5 착수 여부를 결정한다
 
 ### 2.1 Phase 2.0 — In Scope (핵심 3기능)
 
-> **⚠️ 0.4 업데이트 (Meeting #25 코드 확인)**: FR-P2-01과 FR-P2-02는 이미 구현 완료 상태입니다.
-> `/office` 라우트(App.tsx:79), OfficePage.tsx 227줄(Canvas 2개 + 이중 뷰 토글 + useAgentStore 연결), useGameEngine 브릿지 전부 존재.
-> Phase 2.0 실제 작업은 **Gap Analysis + 접근성(FR-P2-03)만** 남아 있습니다.
+> **⚠️ Meeting #25 코드 확인**: FR-P2-01과 FR-P2-02는 **L1(존재+빌드 통과) 확인**. `/office` 라우트(App.tsx:79), OfficePage.tsx 227줄, useGameEngine 브릿지 구현 완료.
+> **L2(런타임) + L2.5(설계 일치) 미검증.** Phase 2.0 실제 작업: L2 검증 → 성공 기준 정의 → Gap Analysis(L2.5) → 보강(접근성 FR-P2-03 + 갭 해소).
 
-| # | Feature | FR ID | 설명 | 구현 상태 |
-|---|---------|-------|------|---------|
-| 1 | **OfficePage 기본 렌더링** | FR-P2-01 | 2.5D 아이소메트릭 Canvas, 부서별 캐릭터 배치, 에이전트 실시간 상태 반영 | **구현 완료** — Gap Analysis 필요 |
-| 2 | **이중 뷰 토글** | FR-P2-02 | OfficePage(Canvas) ↔ 리스트 뷰 전환, 동일 WS 데이터 소스 공유, 전환 시 데이터 일관성 | **구현 완료** — Gap Analysis 필요 |
-| 3 | **접근성 기반** | FR-P2-03 | StatusBadge ARIA(`role="status"` + `aria-label`), `prefers-reduced-motion` 대응, Canvas 접근성 전략 C+B 구현 | **미구현** — 이번 Phase 핵심 작업 |
+| # | Feature | FR ID | 설명 | 완성도 |
+|---|---------|-------|------|--------|
+| 1 | **OfficePage L2 검증 + L3 보강** | FR-P2-01 | 기구현 OfficePage를 런타임(L2) 검증하고 설계 기준 미충족 항목 보강(L3). Canvas + agentStatuses WS 연결 동작 확인 + Gap Analysis | L1 ✅ — **L2 검증 + L2.5 Gap Analysis 필요** |
+| 2 | **이중 뷰 토글 검증 (기구현)** | FR-P2-02 | 기구현 토글(`useState<'office'\|'list'>`) 검증. 전환 시 `selectedAgentId` 유지 + 데이터 일관성 확인 | L1 ✅ — **L2 검증 필요** |
+| 3 | **접근성 기반** | FR-P2-03 | StatusBadge ARIA(`role="status"` + `aria-label`), `prefers-reduced-motion` 대응, Canvas 접근성 전략 C+B 구현 | **미구현** — Step 1 결함 수정 대상 |
 
 > **참고**: Phase 1.5 항목(온보딩, 활동 타임라인, 승인 모달, 설정 페이지)은 Phase 2.0과 별도로 진행 가능. 우선순위는 다음 회의에서 결정.
 
@@ -132,25 +131,39 @@ Phase 2.0 완료 조건을 충족한 후 Phase 2.5 착수 여부를 결정한다
 
 ### 4.1 Phase 2.0 Definition of Done
 
-#### Feature 1 — OfficePage 기본 렌더링 (FR-P2-01)
+#### Feature 1 — OfficePage L2 검증 + L3 보강 (FR-P2-01)
 
-> **구현 완료 (Meeting #25 확인)** — OfficePage.tsx 227줄. Gap Analysis로 설계 일치 여부 검증 필요.
+> **L1 확인 (Meeting #25)** — OfficePage.tsx 227줄. L2(런타임) + L2.5(Gap Analysis) 검증 필요.
 
+**L1 확인 완료 (빌드 통과):**
 - [x] `/office` 라우트 접속 — App.tsx:79
 - [x] Canvas 렌더링 — tileMapRef + characterRef Canvas 2개
 - [x] 에이전트 부서별 배치 — useGameEngine + agentStatuses 연결
 - [x] WS 상태 즉시 반영 — useAgentStore 구독 + speech bubbles
 - [x] 빌드 0 errors — Phase 1 완료 시점 통과
+
+**L2 검증 게이트 (런타임 동작 확인):**
+- [ ] `npm run dev` → `/office` 런타임 에러 0 — 콘솔 에러 없이 렌더링
+- [ ] **에이전트가 Canvas에 표시됨** — 에이전트 존재 시 캐릭터 스프라이트 렌더링 확인
+
+**L2.5 검증 게이트 (설계 일치):**
 - [ ] **Gap Analysis 통과** — `/pdca analyze web-dashboard-phase2` ≥ 90%
 
-#### Feature 2 — 이중 뷰 토글 (FR-P2-02)
+#### Feature 2 — 이중 뷰 토글 검증 (FR-P2-02)
 
-> **구현 완료 (Meeting #25 확인)** — OfficePage.tsx:12 `useState<'office'|'list'>`. Gap Analysis 필요.
+> **L1 확인 (Meeting #25)** — OfficePage.tsx:12 `useState<'office'|'list'>`. L2 검증 + Gap Analysis 필요.
 
+**L1 확인 완료 (빌드 통과):**
 - [x] Office / List 전환 버튼 — OfficePage.tsx:153-172
 - [x] 전환 시 같은 agentStatuses 데이터 공유 — useAgentStore 단일 소스
 - [x] 선택 에이전트(`selectedAgentId`) 유지 — Zustand store
 - [x] 전환 즉시 완료 — React state toggle
+
+**L2 검증 게이트:**
+- [ ] 뷰 전환 후 `selectedAgentId` 실제 유지 확인
+- [ ] 전환 시 런타임 에러 0
+
+**L2.5 검증 게이트:**
 - [ ] **Gap Analysis 통과** — `/pdca analyze web-dashboard-phase2` ≥ 90%
 
 #### Feature 3 — 접근성 기반 (FR-P2-03)
@@ -176,7 +189,8 @@ Phase 2.0 완료 조건을 충족한 후 Phase 2.5 착수 여부를 결정한다
 | **게임엔진 이식 복잡성** — `GameEngine.ts`가 VS Code webview API에 의존하는 잔재가 있을 수 있음 | ~~High~~ **Closed** | ~~Medium~~ **N/A** | **사전 검토 완료 (Meeting #23)**: `GameEngine.ts` import 전수 확인 결과 VS Code 의존성 없음. `@radar/shared` 타입만 사용. 이식 준비 완료 상태. |
 | **Canvas 접근성 구현 한계** — Canvas DOM 요소는 ARIA 지원이 제한적. 에이전트 캐릭터에 직접 `aria-label` 부여 불가 | High | High | Canvas 위에 hidden DOM 오버레이 전략 + 별도 설계 안건으로 등록 (Section 6 참조) |
 | **이중 뷰 상태 동기화** — OfficePage와 AgentsPage가 같은 `useAgentStore`를 공유하지 않으면 데이터 불일치 | Medium | Low | `useAgentStore` 단일 소스로 두 뷰가 공유하도록 설계. 뷰 전환 시 re-subscribe 없음 확인 |
-| **React→Canvas 브릿지 동기화** — `useAgentStore`(Zustand/React 상태)와 `GameEngine`(Canvas rAF 루프)는 업데이트 사이클이 다름 | ~~Medium~~ **Low** | ~~Medium~~ **Low** | **브릿지 이미 구현 완료 (Meeting #23 확인)**: `useGameEngine` 훅이 `agentStatuses: Record<string, AgentStatus>`를 받아 `useEffect`에서 `engine.updateAllAgentStatuses()` 호출. 단방향 브릿지 패턴 완성. `GameEngine.updateAgentStatus()` / `updateAllAgentStatuses()` public API 존재. OfficePage는 이 훅을 사용하면 됨. |
+| **React→Canvas 브릿지 동기화** — `useAgentStore`(Zustand/React 상태)와 `GameEngine`(Canvas rAF 루프)는 업데이트 사이클이 다름 | ~~Medium~~ **Closed** | ~~Medium~~ **N/A** | **구현 완료 (Meeting #23+#25)**: `useGameEngine` 훅이 `agentStatuses: Record<string, AgentStatus>`를 받아 `useEffect`에서 `engine.updateAllAgentStatuses()` 호출. 단방향 브릿지 패턴 완성. 브릿지 API 품질 검증 완료 — 추가 설계 불필요. |
+| **Character.ts PIXEL_DATA fallback** — `Character.ts`에서 스프라이트 픽셀 데이터 로드 실패 시 fallback 처리 부재 가능성. 런타임에서 캐릭터 미표시 또는 TypeError 발생 가능 | Medium | Medium | 서진 Step 1 코드 확인에서 식별. Step 1 결함 수정 항목으로 등록 — **서진 해소 중** |
 | **60fps 성능 저하** — 에이전트 수 증가 + 실시간 상태 갱신이 동시에 발생할 때 프레임 드롭 | Medium | Medium | Character 렌더링 dirty flag 패턴 — 상태 변경 시만 canvas 재그리기. baseline 측정 후 최적화 |
 | **recharts 도입 시점** — Phase 2.5 착수 전 충분한 운영 데이터가 없을 수 있음 | Low | Medium | Phase 2.0 완료 후 SQLite 데이터 양 확인. 최소 7일치 데이터 확보 후 Phase 2.5 착수 |
 
@@ -255,9 +269,11 @@ Canvas 접근성과 별개로 이중 뷰 전환 버튼, 에이전트 리스트(A
 3. [x] ~~**Canvas 접근성 전략 결정**~~ — **완료 (Meeting #25)**: C+B 혼합 채택 확정. Section 6.3 업데이트.
 4. [x] ~~**GameEngine.ts VS Code 의존성 감사**~~ — **완료 (Meeting #23)**: 의존성 없음.
 5. [x] ~~**React→Canvas 브릿지 설계**~~ — **완료**: `useGameEngine` 이미 구현.
-6. [ ] **OfficePage Gap Analysis** — `/pdca analyze web-dashboard-phase2` 실행 (Meeting #26)
-7. [ ] **FR-P2-03 접근성 구현** — StatusBadge ARIA + prefers-reduced-motion + Canvas aria-live (Meeting #26 킥오프 후)
-8. [ ] **Phase 2.0 Design 문서 작성** — Plan 확정 후 `/pdca design web-dashboard-phase2`
+6. [ ] **Step 1 결함 수정** — Character.ts PIXEL_DATA fallback 추가 (서진), reduced-motion + ARIA 결함 수정 (서진) ← Gap Analysis 전에 선행
+7. [ ] **OfficePage 성공 기준 정의** — Design 문서 OfficePage 섹션 추가, gap-detector 실행 전 선행 필수
+8. [ ] **OfficePage Gap Analysis** — `/pdca analyze web-dashboard-phase2` 실행 (성공 기준 정의 완료 후)
+9. [ ] **FR-P2-03 접근성 구현** — StatusBadge ARIA + prefers-reduced-motion + Canvas aria-live (Meeting #26 킥오프 후)
+10. [ ] **Phase 2.0 Design 문서 작성** — Plan 확정 후 `/pdca design web-dashboard-phase2`
 
 ---
 
@@ -269,3 +285,4 @@ Canvas 접근성과 별개로 이중 뷰 전환 버튼, 에이전트 리스트(A
 | 0.2 | 2026-04-09 | Meeting #22 execution 반영. (1) 접근성 방향 조정: 아이콘 불필요 → 텍스트 레이블 유지 (도윤 8px 가독성 검토 결과) (2) NFR 4개→2개 축소: reduced-motion + Canvas 접근성 (3) Section 5 React→Canvas 브릿지 리스크 추가 (4) Phase 1.5 독립 단계 제거 → Phase 2 흡수 반영 (5) Section 6.4 아이콘 코드 예시 → 텍스트 레이블 ARIA 예시로 교체 | Ha-eun (planner) |
 | 0.3 | 2026-04-09 | Meeting #23 사전 확인 결과 반영. (1) Section 5 '게임엔진 이식 복잡성' 리스크 Close — VS Code 의존성 없음 확인 (2) Section 5 'React→Canvas 브릿지' 리스크 Low로 하향 — `useGameEngine` + `updateAllAgentStatuses()` 브릿지 이미 구현 완료 확인 (3) Section 8 Next Steps 2개 항목 완료 표시 (Phase 1.5 흡수, 게임엔진 감사) + React→Canvas 브릿지 설계 항목 추가 후 즉시 완료 표시 | Ha-eun (planner) |
 | 0.4 | 2026-04-09 | Meeting #25 PD 코드 확인 결과 반영 (OfficePage.tsx + App.tsx 직접 확인). (1) Section 2.1: FR-P2-01/FR-P2-02 "구현 완료" 상태로 업데이트, 구현 상태 컬럼 추가 (2) Section 4.1: Feature 1/2 DoD 체크박스를 실제 구현 증거 기반으로 업데이트 — Gap Analysis 통과를 최종 기준으로 변경 (3) Section 6.3: Canvas 접근성 전략 확정 — C+B 혼합 채택, 전략 A(hidden overlay) 복잡도 과도로 기각 | Min-jun (PD) |
+| 0.5 | 2026-04-09 | Meeting #25 하은 태스크 반영 — L1/L2/L2.5/L3 프레임워크 적용. (1) Section 2.1: FR-P2-01 "OfficePage L2 검증+L3 보강", FR-P2-02 "이중 뷰 토글 검증(기구현)"으로 전환. 완성도 컬럼을 L1/L2/L2.5 단계로 명시 (2) Section 4.1: DoD를 검증 통과 기준으로 전환. L2 게이트(에이전트가 Canvas에 표시됨), L2.5 게이트(Gap Analysis) 추가 (3) Section 5: 브릿지 리스크 Low→Closed, Character.ts PIXEL_DATA fallback 리스크 신규 추가(Medium/서진 해소 중) (4) Section 8: Step 1 결함 수정 항목 추가(Character.ts fallback + 접근성 결함), OfficePage 성공 기준 정의 항목 추가 | Ha-eun (planner) |

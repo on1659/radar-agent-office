@@ -572,3 +572,19 @@ Phase 2 Plan 리뷰로 바로 넘어갈 준비됩니다. 하은 씨 `web-dashboa
 | `Character.ts` | ✅ A* 이동, 방향별 스프라이트, 상태별 시각 효과 | ⚠️ 실제 에이전트 ID용 픽셀 데이터 추가 필요 |
 | `Camera.ts` | ✅ 마우스 드래그 패닝, 휠 스크롤, 경계 클램핑 | ❌ 없음 |
 | `Pathfinder.
+
+## [2026-04-09 13:38]
+
+## Meeting #26
+
+### 결정사항
+- L2 = '핵심 기능 동작'으로 통일, L2a/L2b 분리 안 함 — 프레임워크 단순 유지, Phase 1 교훈 적용
+- DEFAULT_PIXEL_DATA 옵션 C 확정 — 해시 기반 색상 + 기본 실루엣. 도윤 UI 결정
+- Character.ts fallback 선행 작업 승인 — 결함 수정이므로 킥오프 전 즉시 실행. 도윤 스펙으로 의존성 해소
+- Plan 수정 범위: Section 2.1 + 4.1 + 5만. 교훈 문서화는 킥오프 후 별도
+- 이번 회의에서 Phase 2 킥오프 — 80% Plan으로 시작, 실행하면서 보완. 기술 입력 완전+범위 확정+수정 명확
+- 대표님용 시각 확인 체크리스트 승인 — 포트 42817, 3개 항목(PIXEL_DATA △ 표시). 회의 종료 후 전달
+- OfficePage 성공 기준 상세화는 Phase 2 Step 2에서 — Design 문서 섹션 추가를 Step 1과 병렬로 진행
+
+### 내가 한 일
+이제 `getDefaultPixelData` 함수를 구현합니다. 해시 기반 hue + 기본 실루엣 방식(도윤 옵션 C)입니다.타입체크 + 빌드 실행합니다.빌드 0 errors. 이제 L2 검증 — `npm run dev` 기동 후 OfficePage 런타임 에러 확인합니다.

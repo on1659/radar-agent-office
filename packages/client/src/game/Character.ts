@@ -2,6 +2,74 @@ import { PIXEL_DATA } from '../shared/pixel-data';
 import type { PixelChar, SpriteDirection } from '../shared/pixel-data';
 import { tileToScreen } from './utils';
 
+/** Simple deterministic hash: string → non-negative integer */
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
+
+/** HSL (h: 0–360, s: 0–100, l: 0–100) → '#rrggbb' */
+function hslToHex(h: number, s: number, l: number): string {
+  const sv = s / 100;
+  const lv = l / 100;
+  const a = sv * Math.min(lv, 1 - lv);
+  const f = (n: number): string => {
+    const k = (n + h / 30) % 12;
+    const color = lv - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+/**
+ * Generate a deterministic PixelChar for any agentId not found in PIXEL_DATA.
+ * Uses a hash of the agentId to derive a unique hue, then maps it to
+ * the standard 9-slot palette shared by all PIXEL_DATA characters.
+ * Returns a grid-only PixelChar (no sprites); prerenderSprites() will
+ * fall back to the baseImage path (single static frame), which is fine
+ * for agents without dedicated pixel art.
+ */
+function getDefaultPixelData(agentId: string): PixelChar {
+  const hue = hashString(agentId) % 360;
+
+  const palette: Record<number, string> = {
+    1: '#2d2d38',
+    2: '#f0c8a0',
+    3: hslToHex(hue, 70, 50),
+    4: hslToHex(hue, 70, 35),
+    5: hslToHex(hue, 30, 25),
+    6: hslToHex(hue, 80, 65),
+    7: '#ffffff',
+    8: hslToHex(hue, 60, 75),
+    9: '#1a1a2e',
+  };
+
+  // Generic chibi silhouette — identical structure to PIXEL_DATA entries
+  const grid: number[][] = [
+    [0,0,0,0,0,5,5,5,5,5,0,0,0,0,0,0],
+    [0,0,0,0,5,5,5,5,5,5,5,0,0,0,0,0],
+    [0,0,0,1,5,5,5,5,5,5,5,1,0,0,0,0],
+    [0,0,1,2,2,2,2,2,2,2,2,2,1,0,0,0],
+    [0,0,1,2,2,9,2,2,2,9,2,2,1,0,0,0],
+    [0,0,1,2,2,9,2,2,2,9,2,2,1,0,0,0],
+    [0,0,1,2,2,2,2,2,2,2,2,2,1,0,0,0],
+    [0,0,0,1,2,2,2,2,2,2,2,1,0,0,0,0],
+    [0,0,0,0,1,1,2,2,2,1,1,0,0,0,0,0],
+    [0,0,0,0,1,3,3,3,3,3,1,0,0,0,0,0],
+    [0,0,0,1,3,3,7,7,3,3,3,1,0,0,0,0],
+    [0,0,0,1,3,3,3,3,3,3,3,1,0,0,0,0],
+    [0,0,0,1,4,3,3,3,3,3,4,1,0,0,0,0],
+    [0,0,0,0,1,1,1,0,1,1,1,0,0,0,0,0],
+    [0,0,0,0,1,4,4,0,4,4,1,0,0,0,0,0],
+    [0,0,0,0,1,1,1,0,1,1,1,0,0,0,0,0],
+  ];
+
+  return { palette, grid };
+}
+
 /** Visual state of a character (simplified for the Canvas renderer) */
 export type CharacterVisualState = 'idle' | 'selected' | 'meeting' | 'streaming' | 'done' | 'error' | 'cancelled';
 
@@ -66,7 +134,7 @@ export class Character {
     this.homeTileY = tileY;
     // Each agent walks at a slightly different speed (2.5~3.5 tiles/sec) for natural feel
     this.moveSpeed = 2.5 + Math.random() * 1.0;
-    this.pixelChar = PIXEL_DATA[agentId] ?? null;
+    this.pixelChar = PIXEL_DATA[agentId] ?? getDefaultPixelData(agentId);
     this.prerenderSprites();
   }
 

@@ -178,7 +178,98 @@ OfficePage는 "에이전트 오피스 시각화" 대시보드로 정의하고,
 
 ---
 
-## 5. 권장사항 요약
+## 5. prefers-reduced-motion 수정 스펙
+
+### 현재 상태
+
+`StatusBadge.tsx:15-25` — `radar-pulse` @keyframes를 `document.head`에 직접 주입.
+`variables.css:56-61` — `@media (prefers-reduced-motion: reduce)` override는 `pulse` keyframe만 대상. `radar-pulse`는 적용 안 됨.
+
+**결과**: 접근성 설정에서 "모션 줄이기"를 켠 사용자에게도 pulse 애니메이션 실행됨.
+
+### 수정 스펙
+
+`StatusBadge.tsx`에서 `radar-pulse` keyframe 주입 시 `prefers-reduced-motion` 규칙을 함께 포함:
+
+```typescript
+el.textContent =
+  '@keyframes radar-pulse {' +
+  '  0%, 100% { box-shadow: 0 0 4px var(--status-working); }' +
+  '  50%       { box-shadow: 0 0 12px var(--status-working), 0 0 24px var(--status-working); }' +
+  '}' +
+  '@media (prefers-reduced-motion: reduce) {' +
+  '  @keyframes radar-pulse { 0%, 100% { box-shadow: 0 0 4px var(--status-working); } }' +
+  '}';
+```
+
+`@media (prefers-reduced-motion: reduce)` 안에서 `radar-pulse`를 정적 상태(glow 고정, animation 없음)로 override.
+별도 JS 분기 불필요 — CSS keyframe 정의가 no-op이 되므로 `animation` 속성 자체를 건드리지 않아도 됨.
+
+---
+
+## 6. OfficePage Canvas 접근성 구현 스펙 (옵션 2 최종)
+
+> **확정 회의**: Meeting #25
+> **채택 이유**: 게임엔진 격리 원칙(`game/은 순수 Canvas`) 준수 + 60fps 유지 + 구현 복잡도 없음
+
+### 6.1 Canvas 컨테이너 — role + aria-label
+
+`OfficePage.tsx:176` — Canvas 컨테이너 `<div ref={containerRef}>` 에 추가:
+
+```tsx
+<div
+  ref={containerRef}
+  role="img"
+  aria-label="에이전트 오피스 — 실시간 에이전트 활동을 시각화하는 2.5D 공간입니다. 상세 정보는 에이전트 목록 페이지에서 확인할 수 있습니다."
+  style={{ ... }}
+  ...
+>
+```
+
+**선택 근거**:
+- `role="img"` — Canvas 전체를 단일 이미지 요소로 스크린리더에 노출. DOM 구조 없는 Canvas에 적합.
+- `aria-label` 문구 — "시각화 공간"임을 명시 + "에이전트 목록 페이지"를 접근 가능한 대안으로 안내.
+- DOM ARIA overlay(옵션 1)는 60fps 루프에서 DOM 동기화 필요 → 격리 원칙 위반 → 채택하지 않음.
+
+### 6.2 뷰 토글 버튼 — aria-pressed
+
+`OfficePage.tsx:153-170` — 뷰 토글 버튼에 `aria-pressed` 추가:
+
+```tsx
+<button
+  key={v}
+  onClick={() => setView(v)}
+  aria-pressed={view === v}
+  style={{ ... }}
+>
+  {v === 'office' ? 'Office' : 'List'}
+</button>
+```
+
+**선택 근거**:
+- `aria-pressed` — 현재 활성 뷰를 스크린리더에 알림 (`true`/`false` 토글).
+- `role="button"`은 이미 `<button>` 태그로 묵시적 적용되므로 별도 추가 불필요.
+
+### 6.3 구현 범위 요약
+
+| 파일 | 변경 사항 | 범위 |
+|------|-----------|------|
+| `OfficePage.tsx` | Canvas 컨테이너 `role="img"` + `aria-label` 추가 | 1줄 속성 추가 |
+| `OfficePage.tsx` | 토글 버튼 `aria-pressed` 추가 | 1줄 속성 추가 (버튼 2개) |
+| `StatusBadge.tsx` | `radar-pulse` keyframe에 `prefers-reduced-motion` override 추가 | 4줄 CSS 추가 |
+
+총 변경량: 6줄. 기존 기능·렌더링에 영향 없음.
+
+### 6.4 WCAG 준수 수준
+
+- `role="img"` + `aria-label`: WCAG 2.1 §1.1.1 Non-text Content — Level A
+- `aria-pressed`: WCAG 2.1 §4.1.2 Name, Role, Value — Level A
+- `prefers-reduced-motion`: WCAG 2.1 §2.3.3 Animation from Interactions — Level AAA (권장)
+- Canvas 자체 접근성 없음(옵션 1 미채택)으로 WCAG Level AA 완전 준수는 불가 — 인정하는 트레이드오프.
+
+---
+
+## 7. 권장사항 요약
 
 | 항목 | 권장 | 이유 |
 |------|------|------|
@@ -187,16 +278,14 @@ OfficePage는 "에이전트 오피스 시각화" 대시보드로 정의하고,
 | Canvas 접근성 | 옵션 2 (보조 뷰 포지셔닝) | 게임엔진 격리 원칙 준수, 구현 복잡도 없음 |
 | AgentsPage 접근성 | 현재 구현으로 기본 요건 충족 | StatusBadge 텍스트 레이블 + 정렬 순서 |
 
-### 향후 Phase 1.5 구현 우선순위
+### Phase 2 접근성 구현 우선순위 (확정 — Meeting #25)
 
-1. **접근성 1번** (이 문서): 아이콘 방안 결정 → Option A로 현재 텍스트 레이블 유지 확인
-2. **접근성 2번**: `prefers-reduced-motion` — `radar-pulse` @keyframes에 미적용 상태 (StatusBadge.tsx는 `radar-pulse` 사용, variables.css의 `pulse`와 별개)
-3. **코드 스타일 3번**: Optional chaining 패턴 통일 (`AgentsPage.tsx:148–150`)
+| 순서 | 항목 | 파일 | Phase 2 단계 |
+|------|------|------|-------------|
+| 1 | `prefers-reduced-motion` — `radar-pulse` override 추가 | `StatusBadge.tsx` | Step 1 (결함 수정) |
+| 2 | Canvas 컨테이너 `role="img"` + `aria-label` | `OfficePage.tsx` | Step 1 (결함 수정) |
+| 3 | 뷰 토글 버튼 `aria-pressed` | `OfficePage.tsx` | Step 1 (결함 수정) |
+| 4 | Canvas 접근성 전략 구현 (옵션 2) | `OfficePage.tsx` | Step 3 (보강) |
 
-### prefers-reduced-motion 이슈 (발견 항목)
-
-`StatusBadge.tsx`는 `radar-pulse` @keyframes를 `document.head`에 직접 주입한다.
-`variables.css`의 `@media (prefers-reduced-motion: reduce)` override는 `pulse`에만 적용되며, `radar-pulse`는 대상이 아니다.
-
-접근성 설정에서 "줄어든 모션"을 켠 사용자에게도 `radar-pulse` 애니메이션이 실행된다.
-→ Phase 1.5 접근성 2번 항목으로 처리 필요.
+**결함 수정(1-3)**: L2 검증과 병렬 처리 가능. 코드 변경량 6줄. 다른 작업 의존 없음.
+**보강(4)**: Canvas 접근성 전략은 OfficePage L2 검증 완료 후 진행. Section 6 구현 스펙 참조.
