@@ -163,10 +163,10 @@ Phase 2.0 완료 조건을 충족한 후 Phase 2.5 착수 여부를 결정한다
 
 | Risk | Impact | Likelihood | Mitigation |
 |------|--------|------------|------------|
-| **게임엔진 이식 복잡성** — `GameEngine.ts`가 VS Code webview API에 의존하는 잔재가 있을 수 있음 | High | Medium | 이식 전 `GameEngine.ts` 의존성 전수 검토. VS Code API 잔재 목록 작성 후 제거 계획 수립 |
+| **게임엔진 이식 복잡성** — `GameEngine.ts`가 VS Code webview API에 의존하는 잔재가 있을 수 있음 | ~~High~~ **Closed** | ~~Medium~~ **N/A** | **사전 검토 완료 (Meeting #23)**: `GameEngine.ts` import 전수 확인 결과 VS Code 의존성 없음. `@radar/shared` 타입만 사용. 이식 준비 완료 상태. |
 | **Canvas 접근성 구현 한계** — Canvas DOM 요소는 ARIA 지원이 제한적. 에이전트 캐릭터에 직접 `aria-label` 부여 불가 | High | High | Canvas 위에 hidden DOM 오버레이 전략 + 별도 설계 안건으로 등록 (Section 6 참조) |
 | **이중 뷰 상태 동기화** — OfficePage와 AgentsPage가 같은 `useAgentStore`를 공유하지 않으면 데이터 불일치 | Medium | Low | `useAgentStore` 단일 소스로 두 뷰가 공유하도록 설계. 뷰 전환 시 re-subscribe 없음 확인 |
-| **React→Canvas 브릿지 동기화** — `useAgentStore`(Zustand/React 상태)와 `GameEngine`(Canvas rAF 루프)는 업데이트 사이클이 다름. React re-render와 rAF 60fps 사이클 불일치 시 에이전트 상태가 Canvas에 늦게 반영될 수 있음 | Medium | Medium | GameEngine이 React store를 직접 구독하는 대신, 상태 변경 시 GameEngine 메서드를 명시적으로 호출하는 단방향 브릿지 설계. WS 이벤트 핸들러에서 `store.update()` + `engine.notifyAgentChanged(id)` 동시 호출 패턴 검토 |
+| **React→Canvas 브릿지 동기화** — `useAgentStore`(Zustand/React 상태)와 `GameEngine`(Canvas rAF 루프)는 업데이트 사이클이 다름 | ~~Medium~~ **Low** | ~~Medium~~ **Low** | **브릿지 이미 구현 완료 (Meeting #23 확인)**: `useGameEngine` 훅이 `agentStatuses: Record<string, AgentStatus>`를 받아 `useEffect`에서 `engine.updateAllAgentStatuses()` 호출. 단방향 브릿지 패턴 완성. `GameEngine.updateAgentStatus()` / `updateAllAgentStatuses()` public API 존재. OfficePage는 이 훅을 사용하면 됨. |
 | **60fps 성능 저하** — 에이전트 수 증가 + 실시간 상태 갱신이 동시에 발생할 때 프레임 드롭 | Medium | Medium | Character 렌더링 dirty flag 패턴 — 상태 변경 시만 canvas 재그리기. baseline 측정 후 최적화 |
 | **recharts 도입 시점** — Phase 2.5 착수 전 충분한 운영 데이터가 없을 수 있음 | Low | Medium | Phase 2.0 완료 후 SQLite 데이터 양 확인. 최소 7일치 데이터 확보 후 Phase 2.5 착수 |
 
@@ -237,11 +237,12 @@ Canvas 접근성과 별개로 이중 뷰 전환 버튼, 에이전트 리스트(A
 
 ## 8. Next Steps
 
-1. [ ] **이 문서 리뷰** — 다음 회의에서 3개 핵심 기능 범위 확정 (PD 승인)
-2. [ ] **Phase 1.5 우선순위 결정** — Phase 2.0 착수 전 Phase 1.5 완료 여부 결정 (별도 회의)
+1. [ ] **이 문서 리뷰** — Meeting #23에서 3개 핵심 기능 범위 확정 (PD 승인)
+2. [x] ~~**Phase 1.5 우선순위 결정**~~ — Phase 2에 흡수 완료 (Meeting #22 결정)
 3. [ ] **Canvas 접근성 전략 결정** — Section 6.3 전략 A vs C+B 결정 (도윤 설계 안건)
-4. [ ] **GameEngine.ts VS Code 의존성 감사** — 이식 전 `GameEngine.ts` + `Character.ts` VS Code API 잔재 검토 (서진 태스크)
-5. [ ] **Phase 2.0 Design 문서 작성** — Plan 확정 후 `/pdca design web-dashboard-phase2`
+4. [x] ~~**GameEngine.ts VS Code 의존성 감사**~~ — **완료 (Meeting #23 사전 확인)**: VS Code 의존성 없음. `@radar/shared` 타입만 import. 이식 준비 완료.
+5. [x] ~~**React→Canvas 브릿지 설계**~~ — **완료**: `useGameEngine` 훅 + `GameEngine.updateAllAgentStatuses()` 이미 구현. OfficePage에서 훅 사용하면 됨.
+6. [ ] **Phase 2.0 Design 문서 작성** — Plan 확정 후 `/pdca design web-dashboard-phase2`
 
 ---
 
@@ -251,3 +252,4 @@ Canvas 접근성과 별개로 이중 뷰 전환 버튼, 에이전트 리스트(A
 |---------|------|---------|--------|
 | 0.1 | 2026-04-09 | 초안. Phase 2.0 핵심 3기능(OfficePage + 이중 뷰 + 접근성) 범위 초안. Phase 2.5 백로그 정리. Canvas 접근성 설계 안건 등록 | Ha-eun (planner) |
 | 0.2 | 2026-04-09 | Meeting #22 execution 반영. (1) 접근성 방향 조정: 아이콘 불필요 → 텍스트 레이블 유지 (도윤 8px 가독성 검토 결과) (2) NFR 4개→2개 축소: reduced-motion + Canvas 접근성 (3) Section 5 React→Canvas 브릿지 리스크 추가 (4) Phase 1.5 독립 단계 제거 → Phase 2 흡수 반영 (5) Section 6.4 아이콘 코드 예시 → 텍스트 레이블 ARIA 예시로 교체 | Ha-eun (planner) |
+| 0.3 | 2026-04-09 | Meeting #23 사전 확인 결과 반영. (1) Section 5 '게임엔진 이식 복잡성' 리스크 Close — VS Code 의존성 없음 확인 (2) Section 5 'React→Canvas 브릿지' 리스크 Low로 하향 — `useGameEngine` + `updateAllAgentStatuses()` 브릿지 이미 구현 완료 확인 (3) Section 8 Next Steps 2개 항목 완료 표시 (Phase 1.5 흡수, 게임엔진 감사) + React→Canvas 브릿지 설계 항목 추가 후 즉시 완료 표시 | Ha-eun (planner) |

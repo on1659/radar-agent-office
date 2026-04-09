@@ -783,3 +783,80 @@ Phase 2 Plan이 "새로 구현"을 가정하고 있는데, 실제로는 **기존
 
 **FR-P2-03c — prefers-reduced-motion:**
 `variables.css:56–61`에서 `@keyframes pulse`에 reduced-motion override
+
+## [2026-04-09 03:16]
+
+## Meeting #24
+
+### 결정사항
+- Step 1을 5개 항목 코드+런타임 검증으로 재정의 — 시각 확인 게이트 제거. 회의 에이전트 환경 제약 인정
+- 서진 즉시 도구 사용 허가 — npm run dev 기동 + 5개 항목 검증. 5분 내 완료
+- 블로커 0개 확인 시 Phase 1 공식 마감 — 추가 확인 단계 없음. 코드+문서+런타임 세 축 통과 기준
+- Phase 1 마감 즉시 Phase 2 Plan 리뷰 진입 — 하은 초안 완성 상태. 이번 회의 안에 리뷰
+- 시각 확인은 대표님께 별도 요청 — npm run dev → localhost:5173/agents 브라우저 확인. Phase 1 마감과 독립적
+- Phase 2 Plan 리뷰 핵심 안건 3개 — React→Canvas 브릿지 복잡도 + 접근성 NFR 2개(reduced-motion, Canvas 접근성) + 이중 뷰 상태 동기화
+
+### 내가 한 일
+코드 전체 확인 완료. 대표님용 체크리스트 작성하고 Phase 2 리뷰 의견을 정리합니다.
+
+---
+
+**도윤 — 코드 레벨 검증 + 체크리스트 + Phase 2 리뷰 의견:**
+
+---
+
+### Step 1 코드 레벨 최종 점검 (브라우저 검증 전 사전 확인)
+
+| # | 항목 | 코드 위치 | 예상 결과 | 주의점 |
+|---|------|-----------|----------|--------|
+| 1 | 라우팅 `/agents` | `App.tsx:78` `<Route path="/agents" element={<AgentsPage />} />` | ✅ 연결됨 | 토큰 로드 전 loading screen이 먼저 표시됨. 서버(:3001)가 떠야 토큰 발급 |
+| 2 | 1/3:2/3 레이아웃 | `AgentsPage.tsx:36-41` `listFlex:1, logFlex:2, gap:16` | ✅ 정확 | flex 컨테이너는 `height:'100%'`인데 부모(`<main>`)에 명시적 높이가 있어야 동작. `DashboardShell` 확인 필요 |
+| 3 | Empty State | `AgentsPage.tsx:157-161` `sorted.length === 0` 조건 | ✅ 존재 | `fetchAgents()` API 응답 전 잠깐 빈 화면이 보일 수 있음 — 이건 정상 |
+| 4 | 사이드바 `/agents` NavLink | `Sidebar.tsx:6` `{ path: '/agents', label: '에이전트 목록', icon: '🤖' }` | ✅ 존재 | 클릭 시 active 스타일 확인 필요 |
+
+**주의점 1개** — 서버가 안 떠 있으면 토큰 발급이 안 됩니다. `npm run dev`는 서버(:3001)와 클라이언트(:5173)를 동시에 올려야 하고, 서버가 먼저 응답해야 `/api/auth/token` 자동 발급이 됩니다. 서버 없이 클라이언트만 뜨면 "Server not reachable. Run: npm run dev" 에러 화면이 나옵니다.
+
+---
+
+### 대표님용 시각 확인 체크리스트
+
+서진 씨 `npm run dev` 기동 후 브라우저에서 순서대로 확인하세요.
+
+```
+[ Step 1 시각 확인 — localhost:5173 ]
+
+□ 1. 초기 화면
+   → RADAR 로고 + "Connecting to server..." 메시지가 잠깐 보이다가
+   → 사이드바 + 메인 콘텐츠로 전환되면 ✓
+   → "Server not reachable" 에러가 나오면 ✗ (블로커 — 서버 미기동)
+
+□ 2. 사이드바
+   → 왼쪽에 사이드바 표시됨 ✓
+   → "🤖 에이전트 목록" 항목이 보임 ✓
+   → 클릭 시 URL이 /agents로 변경됨 ✓
+
+□ 3. /agents 페이지 레이아웃
+   → 왼쪽 1/3 영역에 "에이전트 목록" 헤더 ✓
+   → 오른쪽 2/3 영역에 "로그 패널" 헤더 ✓
+   → 두 영역이 세로 구분선으로 분리됨 ✓
+
+□ 4. Empty State (에이전트 없을 때)
+   → 왼쪽 목록 영역에 "No agents found. Check WORKSPACE_ROOT." 텍스트 ✓
+   → 텍스트가 눈에 보이는 색상으로 표시됨 (흰색 배경에 검정, 또는 어두운 배경에 회색) ✓
+```
+
+**블로커 판정 기준**: 1번에서 에러 화면이 나오거나, 3번에서 페이지 전체가 비거나, 콘솔에 빨간 에러가 뜨면 블로커. 레이아웃이 조금 어색하거나 비율이 정확히 1/3이 아니면 비블로커.
+
+---
+
+### Phase 2 Plan 리뷰 의견
+
+하은 씨 Plan 문서 `web-dashboard-phase2.plan.md`를 읽었습니다. 전체적으로 잘 정리됐습니다. UI 관점에서 두 가지만 의견 드립니다.
+
+---
+
+**의견 1 — 이중 뷰 상태 동기화 (FR-P2-02a)**
+
+Plan 문서 Section 5에 "이중 뷰 상태 동기화 리스크 — 낮음"으로 기록돼 있는데, **낮음으로 볼 수 없습니다.**
+
+`OfficePage.tsx`를 보니 이미 `selectedAge

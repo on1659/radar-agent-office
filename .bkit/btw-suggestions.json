@@ -1,8 +1,49 @@
 {
   "version": "1.0",
-  "suggestions": [],
+  "suggestions": [
+    {
+      "id": "btw-002",
+      "timestamp": "2026-04-09T00:00:00.000Z",
+      "suggestion": "00",
+      "context": {
+        "file": null,
+        "pdcaPhase": "do",
+        "feature": "store"
+      },
+      "category": "general",
+      "status": "pending",
+      "promotedTo": null,
+      "priority": null,
+      "teamContext": {
+        "isTeamSession": false,
+        "phase": "do",
+        "role": "user",
+        "pattern": null
+      }
+    },
+    {
+      "id": "btw-001",
+      "timestamp": "2026-04-09T00:00:00.000Z",
+      "suggestion": "컨텍스트 등록 — 하네스 엔지니어링 방식으로 개발 세션 컨텍스트를 자동 등록/관리하는 기능",
+      "context": {
+        "file": null,
+        "pdcaPhase": "do",
+        "feature": "store"
+      },
+      "category": "skill-request",
+      "status": "pending",
+      "promotedTo": null,
+      "priority": null,
+      "teamContext": {
+        "isTeamSession": false,
+        "phase": "do",
+        "role": "user",
+        "pattern": null
+      }
+    }
+  ],
   "stats": {
-    "total": 0,
+    "total": 2,
     "promoted": 0,
     "dismissed": 0,
     "lastAnalyzed": null
